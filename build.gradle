@@ -27,6 +27,7 @@ dependencies {
     // Elasticsearch Java Client
     implementation 'co.elastic.clients:elasticsearch-java:8.12.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'jakarta.json:jakarta.json-api:2.1.3'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

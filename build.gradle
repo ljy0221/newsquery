@@ -17,8 +17,9 @@ repositories {
 }
 
 dependencies {
-    // ANTLR4
+    // ANTLR4 (코드 생성 툴 + 런타임 라이브러리 모두 필요)
     antlr 'org.antlr:antlr4:4.13.1'
+    implementation 'org.antlr:antlr4-runtime:4.13.1'
 
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -33,7 +34,7 @@ dependencies {
 
 generateGrammarSource {
     arguments += ['-visitor', '-package', 'com.newsquery.nql']
-    outputDirectory = new File("${buildDir}/generated-src/antlr/main/com/newsquery/nql")
+    outputDirectory = layout.buildDirectory.dir('generated-src/antlr/main/com/newsquery/nql').get().asFile
 }
 
 compileJava {
@@ -43,7 +44,7 @@ compileJava {
 sourceSets {
     main {
         java {
-            srcDir "${buildDir}/generated-src/antlr/main"
+            srcDir layout.buildDirectory.dir('generated-src/antlr/main')
         }
     }
 }

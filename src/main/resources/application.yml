@@ -1,8 +1,9 @@
 spring:
   application:
     name: newsquery
+  elasticsearch:
+    uris: "http://localhost:9200"
 
-elasticsearch:
-  host: localhost
-  port: 9200
-  index: news
+newsquery:
+  elasticsearch:
+    index: news

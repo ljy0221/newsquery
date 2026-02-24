@@ -25,6 +25,9 @@ public class NQLQueryParser {
 
         try {
             NQLExpression expr = new NQLVisitorImpl().visit(parser.query());
+            if (expr == null) {
+                throw new IllegalArgumentException("NQL 파싱 오류: 표현식을 인식할 수 없습니다.");
+            }
             return queryBuilder.build(expr);
         } catch (ParseCancellationException e) {
             throw new IllegalArgumentException("NQL 파싱 오류: " + e.getMessage(), e);

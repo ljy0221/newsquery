@@ -60,8 +60,16 @@ public class ESQueryBuilder {
             return root;
         }
         String rangeOp = RANGE_OPS.get(cmp.op());
+        if (rangeOp == null) {
+            throw new IllegalArgumentException("지원하지 않는 비교 연산자: " + cmp.op());
+        }
         ObjectNode root = mapper.createObjectNode();
-        root.putObject("range").putObject(cmp.field()).put(rangeOp, cmp.value());
+        ObjectNode rangeField = root.putObject("range").putObject(cmp.field());
+        if (cmp.field().equals("score")) {
+            rangeField.put(rangeOp, Double.parseDouble(cmp.value()));
+        } else {
+            rangeField.put(rangeOp, cmp.value());
+        }
         return root;
     }
 

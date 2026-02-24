@@ -6,7 +6,7 @@ query       : expr EOF ;
 
 expr        : expr AND expr          # andExpr
             | expr OR expr           # orExpr
-            | '!' expr               # notExpr
+            | NOT expr               # notExpr
             | '(' expr ')'           # groupExpr
             | keywordExpr            # kwExpr
             | fieldExpr              # fieldExprRule
@@ -42,6 +42,7 @@ SCORE        : 'score' ;
 
 EQ           : '==' ;
 NEQ          : '!=' ;
+NOT          : '!'   ;
 GTE          : '>=' ;
 LTE          : '<=' ;
 GT           : '>' ;

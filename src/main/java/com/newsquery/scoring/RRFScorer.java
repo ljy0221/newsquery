@@ -39,8 +39,14 @@ public class RRFScorer {
         // RRF: BM25 + kNN
         ObjectNode rrf = mapper.createObjectNode();
         ArrayNode retrievers = rrf.putArray("retrievers");
-        retrievers.add(buildStandard(boolQuery));
-        retrievers.add(buildKnn(vector));
+
+        ObjectNode standardRetriever = mapper.createObjectNode();
+        standardRetriever.set("standard", buildStandard(boolQuery));
+        retrievers.add(standardRetriever);
+
+        ObjectNode knnRetriever = mapper.createObjectNode();
+        knnRetriever.set("knn", buildKnn(vector));
+        retrievers.add(knnRetriever);
         rrf.put("rank_window_size", RANK_WINDOW_SIZE);
         rrf.put("rank_constant", RANK_CONSTANT);
 
@@ -60,6 +66,7 @@ public class RRFScorer {
         knn.put("field", VECTOR_FIELD);
         ArrayNode queryVector = knn.putArray("query_vector");
         for (float v : vector) queryVector.add(v);
+        knn.put("k", RANK_WINDOW_SIZE);
         knn.put("num_candidates", KNN_CANDIDATES);
         return knn;
     }

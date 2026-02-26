@@ -126,18 +126,25 @@ def main() -> None:
     args = parser.parse_args()
 
     es = Elasticsearch(args.es_url)
-    if not es.ping():
+    try:
+        es.info()
+        print(f"[OK] Elasticsearch 연결: {args.es_url}")
+    except Exception as e:
         print(f"[ERROR] Elasticsearch에 연결할 수 없습니다: {args.es_url}")
+        print(f"        원인: {e}")
         sys.exit(1)
-    print(f"[OK] Elasticsearch 연결: {args.es_url}")
 
     # 인덱스 생성 / 재생성
-    if args.reset and es.indices.exists(index=args.index):
+    if args.reset and es.indices.exists(index=args.index).body:
         es.indices.delete(index=args.index)
         print(f"[INFO] 기존 인덱스 삭제: {args.index}")
 
-    if not es.indices.exists(index=args.index):
-        es.indices.create(index=args.index, body=INDEX_MAPPING)
+    if not es.indices.exists(index=args.index).body:
+        es.indices.create(
+            index=args.index,
+            mappings=INDEX_MAPPING["mappings"],
+            settings=INDEX_MAPPING["settings"],
+        )
         print(f"[INFO] 인덱스 생성: {args.index}")
     else:
         print(f"[INFO] 기존 인덱스 사용: {args.index}")

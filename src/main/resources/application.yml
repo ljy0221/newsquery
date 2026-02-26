@@ -7,3 +7,5 @@ spring:
 newsquery:
   elasticsearch:
     index: news
+  embedding:
+    service-url: "http://localhost:8000"

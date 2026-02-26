@@ -12,6 +12,10 @@ public class NQLQueryParser {
     private final ESQueryBuilder queryBuilder = new ESQueryBuilder();
 
     public ObjectNode parseToQuery(String nql) {
+        return queryBuilder.build(parseToExpression(nql));
+    }
+
+    public NQLExpression parseToExpression(String nql) {
         CharStream input = CharStreams.fromString(nql);
 
         NQLLexer lexer = new NQLLexer(input);
@@ -28,10 +32,14 @@ public class NQLQueryParser {
             if (expr == null) {
                 throw new IllegalArgumentException("NQL 파싱 오류: 표현식을 인식할 수 없습니다.");
             }
-            return queryBuilder.build(expr);
+            return expr;
         } catch (ParseCancellationException e) {
             throw new IllegalArgumentException("NQL 파싱 오류: " + e.getMessage(), e);
         }
+    }
+
+    public ObjectNode buildQuery(NQLExpression expr) {
+        return queryBuilder.build(expr);
     }
 
     private static class ThrowingErrorListener extends BaseErrorListener {

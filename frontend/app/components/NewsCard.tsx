@@ -14,14 +14,20 @@ export default function NewsCard({ hit }: { hit: NewsHit }) {
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-md transition-shadow">
-      <a
-        href={hit.url || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 leading-snug block"
-      >
-        {hit.title || "(제목 없음)"}
-      </a>
+      {hit.url ? (
+        <a
+          href={hit.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 leading-snug block"
+        >
+          {hit.title || "(제목 없음)"}
+        </a>
+      ) : (
+        <span className="font-medium text-gray-900 dark:text-white leading-snug block">
+          {hit.title || "(제목 없음)"}
+        </span>
+      )}
       <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
         <span className="font-medium text-gray-500 dark:text-gray-400">{hit.source}</span>
         <Dot />

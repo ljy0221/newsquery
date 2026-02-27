@@ -28,19 +28,19 @@ public class ESQueryBuilder {
             return buildCompare(cmp);
         } else if (expr instanceof InExpr in) {
             return buildIn(in);
+        } else if (expr instanceof MatchAllExpr) {
+            return buildMatchAll();
         }
         throw new IllegalArgumentException("Unknown expression type: " + expr.getClass());
     }
 
     private ObjectNode buildKeyword(KeywordExpr kw) {
         ObjectNode root = mapper.createObjectNode();
-        ObjectNode match = root.putObject("match");
+        ObjectNode mm = root.putObject("multi_match");
+        mm.put("query", kw.text());
+        mm.putArray("fields").add("title^2").add("content");
         if (kw.boost() != null) {
-            ObjectNode content = match.putObject("content");
-            content.put("query", kw.text());
-            content.put("boost", kw.boost());
-        } else {
-            match.put("content", kw.text());
+            mm.put("boost", kw.boost());
         }
         return root;
     }
@@ -102,6 +102,12 @@ public class ESQueryBuilder {
         ObjectNode root = mapper.createObjectNode();
         ArrayNode mustNot = root.putObject("bool").putArray("must_not");
         mustNot.add(build(not.expr()));
+        return root;
+    }
+
+    private ObjectNode buildMatchAll() {
+        ObjectNode root = mapper.createObjectNode();
+        root.putObject("match_all");
         return root;
     }
 }

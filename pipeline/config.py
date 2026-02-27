@@ -22,11 +22,19 @@ GDELT_STATE_FILE    = os.getenv("GDELT_STATE_FILE", "/tmp/gdelt_last.txt")
 
 # ── RSS ────────────────────────────────────────────────────────────────────
 RSS_FEEDS = [
+    # 글로벌 종합
     "https://feeds.reuters.com/reuters/topNews",
     "https://feeds.bbci.co.uk/news/rss.xml",
     "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
     "https://feeds.feedburner.com/businessinsider",
     "https://www.wsj.com/xml/rss/3_7085.xml",
+    # 테크/경제
+    "https://feeds.feedburner.com/TechCrunch",
+    "https://feeds.arstechnica.com/arstechnica/index",
+    "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
+    # 한국
+    "https://www.yna.co.kr/rss/news.xml",
+    "https://rss.hankyung.com/economy.xml",
 ]
 RSS_POLL_INTERVAL = int(os.getenv("RSS_POLL_INTERVAL", "300"))   # 5분
 RSS_DEDUP_FILE    = os.getenv("RSS_DEDUP_FILE", "/tmp/rss_seen_urls.txt")

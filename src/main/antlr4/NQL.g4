@@ -10,6 +10,7 @@ expr        : expr AND expr          # andExpr
             | '(' expr ')'           # groupExpr
             | keywordExpr            # kwExpr
             | fieldExpr              # fieldExprRule
+            | STAR                   # matchAllExpr
             ;
 
 keywordExpr : KEYWORD '(' STRING ')' ('*' NUMBER)? ;
@@ -48,6 +49,7 @@ LTE          : '<=' ;
 GT           : '>' ;
 LT           : '<' ;
 
+STAR         : '*' ;
 NUMBER       : [0-9]+ ('.' [0-9]+)? ;
 STRING       : '"' (~["\r\n])* '"' ;
 WS           : [ \t\r\n]+ -> skip ;

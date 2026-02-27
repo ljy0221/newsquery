@@ -1,9 +1,12 @@
 """Kafka consumer → sentence-transformers 임베딩 → Elasticsearch bulk 인덱서."""
 import json
 import logging
+import re
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
+import requests
 from confluent_kafka import Consumer, KafkaError, KafkaException
 from elasticsearch import Elasticsearch, helpers
 from sentence_transformers import SentenceTransformer
@@ -21,9 +24,76 @@ from config import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [WORKER] %(message)s")
 log = logging.getLogger(__name__)
 
-BATCH_SIZE    = 50     # ES bulk 사이즈
-POLL_TIMEOUT  = 1.0    # Kafka poll 타임아웃 (초)
+BATCH_SIZE     = 50    # ES bulk 사이즈
+POLL_TIMEOUT   = 1.0   # Kafka poll 타임아웃 (초)
 MAX_POLL_EMPTY = 5     # 연속 빈 poll 허용 횟수 (종료 조건 없이 계속 실행)
+
+# GDELT 제목 보강
+TITLE_RE       = re.compile(r'<title[^>]*>(.*?)</title>', re.IGNORECASE | re.DOTALL)
+FETCH_WORKERS  = 10    # 병렬 HTTP 요청 수
+FETCH_TIMEOUT  = 1.5   # URL당 타임아웃 (초)
+FETCH_DEADLINE = 6.0   # 배치 전체 최대 대기 (초)
+
+
+def fetch_title(url: str) -> str | None:
+    """URL에서 HTML <title> 태그를 가져와 반환. 실패 시 None."""
+    try:
+        resp = requests.get(
+            url, timeout=FETCH_TIMEOUT,
+            headers={"User-Agent": "Mozilla/5.0"},
+            allow_redirects=True,
+        )
+        if resp.status_code == 200:
+            m = TITLE_RE.search(resp.text[:8192])
+            if m:
+                title = m.group(1).strip()
+                for sep in (" | ", " - ", " – ", " :: "):
+                    if sep in title:
+                        title = title.split(sep)[0].strip()
+                        break
+                return title[:200] if title else None
+    except Exception:
+        pass
+    return None
+
+
+def enrich_gdelt_titles(
+    docs: list[dict], msgs: list
+) -> tuple[list[dict], list]:
+    """GDELT 문서의 SOURCEURL에서 기사 제목을 병렬로 fetch.
+    제목을 가져오지 못한 GDELT 문서는 리스트에서 제거해 반환."""
+    gdelt_indices = {
+        i for i, doc in enumerate(docs)
+        if doc.get("pipeline") == "gdelt" and doc.get("url")
+    }
+    if not gdelt_indices:
+        return docs, msgs
+
+    log.info("GDELT 제목 fetch: %d건", len(gdelt_indices))
+    fetched: set[int] = set()
+    with ThreadPoolExecutor(max_workers=FETCH_WORKERS) as executor:
+        futures = {
+            executor.submit(fetch_title, docs[i]["url"]): i
+            for i in gdelt_indices
+        }
+        try:
+            for future in as_completed(futures, timeout=FETCH_DEADLINE):
+                idx = futures[future]
+                title = future.result()
+                if title:
+                    docs[idx]["title"] = title
+                    fetched.add(idx)
+        except Exception:
+            pass  # deadline 초과 — 나머지는 제거 대상
+
+    drop = gdelt_indices - fetched
+    if not drop:
+        log.info("GDELT 제목 fetch 완료: %d건 성공", len(fetched))
+        return docs, msgs
+
+    keep = [i for i in range(len(docs)) if i not in drop]
+    log.info("GDELT 제목 fetch: 성공 %d / 제거 %d", len(fetched), len(drop))
+    return [docs[i] for i in keep], [msgs[i] for i in keep]
 
 
 def build_consumer() -> Consumer:
@@ -72,12 +142,18 @@ def flush_batch(
     if not batch_docs:
         return
 
+    batch_docs, batch_msgs = enrich_gdelt_titles(batch_docs, batch_msgs)
+
+    if not batch_docs:
+        consumer.commit(asynchronous=False)
+        return
+
     texts   = [d.get("content") or d.get("title", "") for d in batch_docs]
     vectors = embed_batch(model, texts)
     actions = [build_es_action(doc, vec) for doc, vec in zip(batch_docs, vectors)]
 
     success, failed = helpers.bulk(es, actions, raise_on_error=False)
-    log.info("ES bulk: 성공 %d / 실패 %d", success, failed)
+    log.info("ES bulk: 성공 %d / 실패 %d", success, len(failed))
 
     # ES 저장 성공 후 Kafka offset 커밋
     consumer.commit(asynchronous=False)

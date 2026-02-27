@@ -31,6 +31,11 @@ public class NQLVisitorImpl extends NQLBaseVisitor<NQLExpression> {
     }
 
     @Override
+    public NQLExpression visitMatchAllExpr(NQLParser.MatchAllExprContext ctx) {
+        return new NQLExpression.MatchAllExpr();
+    }
+
+    @Override
     public NQLExpression visitKwExpr(NQLParser.KwExprContext ctx) {
         return visit(ctx.keywordExpr());
     }

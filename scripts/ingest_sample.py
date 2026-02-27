@@ -9,8 +9,10 @@
 """
 
 import argparse
+import json
 import random
 import sys
+import urllib.request
 from datetime import datetime, timedelta
 
 try:
@@ -23,15 +25,21 @@ except ImportError:
 INDEX_MAPPING = {
     "mappings": {
         "properties": {
-            "title":       {"type": "text"},
-            "content":     {"type": "text"},
-            "sentiment":   {"type": "keyword"},
-            "source":      {"type": "keyword"},
-            "category":    {"type": "keyword"},
-            "country":     {"type": "keyword"},
-            "publishedAt": {"type": "date"},
-            "score":       {"type": "float"},
-            "url":         {"type": "keyword"},
+            "title":          {"type": "text"},
+            "content":        {"type": "text"},
+            "sentiment":      {"type": "keyword"},
+            "source":         {"type": "keyword"},
+            "category":       {"type": "keyword"},
+            "country":        {"type": "keyword"},
+            "publishedAt":    {"type": "date"},
+            "score":          {"type": "float"},
+            "url":            {"type": "keyword"},
+            "content_vector": {
+                "type":       "dense_vector",
+                "dims":       384,
+                "index":      True,
+                "similarity": "cosine",
+            },
         }
     },
     "settings": {
@@ -84,6 +92,24 @@ BODY_SENTENCES = [
 ]
 
 
+# ─── 임베딩 ──────────────────────────────────────────────────────────────────
+def embed_batch(texts: list[str], embed_url: str) -> list[list[float]] | None:
+    """임베딩 서비스 POST /embed 호출 (배치). 실패 시 None 반환."""
+    payload = json.dumps({"texts": texts}).encode()
+    req = urllib.request.Request(
+        f"{embed_url}/embed",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read())["vectors"]
+    except Exception as e:
+        print(f"[ERROR] 임베딩 서비스 호출 실패: {e}")
+        return None
+
+
 # ─── 문서 생성 ────────────────────────────────────────────────────────────────
 def generate_doc(index_name: str, doc_id: int) -> dict:
     kw  = random.choice(KEYWORDS)
@@ -111,7 +137,7 @@ def generate_doc(index_name: str, doc_id: int) -> dict:
             "country":     cty,
             "publishedAt": published,
             "score":       score,
-            "url":         f"https://{src.lower().replace(' ', '')}.com/news/{doc_id}",
+            "url":         "",
         },
     }
 
@@ -122,7 +148,9 @@ def main() -> None:
     parser.add_argument("--es-url", default="http://localhost:9200", help="ES URL")
     parser.add_argument("--index",  default="news",                  help="인덱스 이름")
     parser.add_argument("--count",  type=int, default=200,           help="삽입할 문서 수")
-    parser.add_argument("--reset",  action="store_true",             help="인덱스 재생성 (기존 데이터 삭제)")
+    parser.add_argument("--reset",     action="store_true",                  help="인덱스 재생성 (기존 데이터 삭제)")
+    parser.add_argument("--embed",     action="store_true",                  help="임베딩 서비스 호출하여 content_vector 추가")
+    parser.add_argument("--embed-url", default="http://localhost:8000",      help="임베딩 서비스 URL")
     args = parser.parse_args()
 
     es = Elasticsearch(args.es_url)
@@ -149,8 +177,20 @@ def main() -> None:
     else:
         print(f"[INFO] 기존 인덱스 사용: {args.index}")
 
-    # 문서 생성 및 bulk insert
+    # 문서 생성
     docs = [generate_doc(args.index, i) for i in range(1, args.count + 1)]
+
+    # 임베딩 추가 (--embed 플래그)
+    if args.embed:
+        texts = [d["_source"]["content"] for d in docs]
+        print(f"[INFO] 임베딩 중... (총 {len(texts)}건, 서비스: {args.embed_url})")
+        vectors = embed_batch(texts, args.embed_url)
+        if vectors is None:
+            print("[WARN] 임베딩 실패 — content_vector 없이 삽입합니다.")
+        else:
+            for doc, vec in zip(docs, vectors):
+                doc["_source"]["content_vector"] = vec
+            print(f"[OK] 임베딩 완료: {len(vectors)}건")
 
     success, errors = helpers.bulk(es, docs, raise_on_error=False)
     print(f"[OK] 삽입 완료: {success}건 성공 / {len(errors)}건 실패")

@@ -20,12 +20,28 @@ interface SearchResult {
 }
 
 const EXAMPLE_QUERIES = [
+  '*',
+  'keyword("AI chip")',
   'keyword("HBM") * 2.0 AND sentiment != "negative"',
-  'source IN ["Reuters", "Bloomberg"] AND score > 3.0',
-  'keyword("AI") AND country == "US"',
-  'sentiment == "positive" AND category == "TECH"',
+  'source IN ["Reuters", "BBC"]',
+  'country == "KR"',
+  'publishedAt >= "2026-02-01" AND sentiment == "positive"',
 ];
 
+const SYNTAX_ROWS = [
+  ['keyword("term")', '본문/제목 키워드 검색'],
+  ['keyword("term") * 2.0', '가중치 부여 (boost)'],
+  ['sentiment == "positive"', 'positive / negative / neutral'],
+  ['source IN ["Reuters","BBC"]', '출처 필터'],
+  ['country == "KR"', '국가 코드 필터'],
+  ['publishedAt >= "YYYY-MM-DD"', '날짜 범위 필터'],
+  ['A AND B', '교집합'],
+  ['A OR B', '합집합'],
+  ['!A', '부정 (NOT)'],
+  ['*', '전체 검색 (match_all)'],
+];
+
+const PAGE_SIZE = 20;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 export default function SearchPanel() {
@@ -34,8 +50,10 @@ export default function SearchPanel() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showDsl, setShowDsl] = useState(false);
+  const [showSyntax, setShowSyntax] = useState(false);
+  const [page, setPage] = useState(0);
 
-  const handleSearch = async () => {
+  const doSearch = async (targetPage: number) => {
     if (!nql.trim()) return;
     setLoading(true);
     setError(null);
@@ -43,7 +61,7 @@ export default function SearchPanel() {
       const res = await fetch(`${API_URL}/api/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nql }),
+        body: JSON.stringify({ nql, page: targetPage }),
       });
 
       if (!res.ok) {
@@ -54,12 +72,17 @@ export default function SearchPanel() {
 
       const data: SearchResult = await res.json();
       setResult(data);
+      setPage(targetPage);
     } catch {
       setError("서버에 연결할 수 없습니다. 백엔드(localhost:8080)가 실행 중인지 확인해주세요.");
     } finally {
       setLoading(false);
     }
   };
+
+  const handleSearch = () => doSearch(0);
+
+  const totalPages = result ? Math.max(1, Math.ceil(result.total / PAGE_SIZE)) : 1;
 
   return (
     <div className="space-y-6">
@@ -102,7 +125,43 @@ export default function SearchPanel() {
             {loading ? "검색 중..." : "검색"}
           </button>
           <span className="text-xs text-gray-400">⌘+Enter</span>
+          <button
+            onClick={() => setShowSyntax(!showSyntax)}
+            className="ml-auto text-xs px-3 py-1 rounded-full border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            {showSyntax ? "문법 숨기기" : "NQL 문법 참조"}
+          </button>
         </div>
+
+        {/* NQL syntax reference */}
+        {showSyntax && (
+          <div className="mt-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden text-xs">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800 text-left">
+                  <th className="px-3 py-2 font-medium text-gray-500 dark:text-gray-400 w-1/2">표현식</th>
+                  <th className="px-3 py-2 font-medium text-gray-500 dark:text-gray-400">설명</th>
+                </tr>
+              </thead>
+              <tbody>
+                {SYNTAX_ROWS.map(([expr, desc]) => (
+                  <tr
+                    key={expr}
+                    className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  >
+                    <td
+                      className="px-3 py-1.5 font-mono text-blue-600 dark:text-blue-300 cursor-pointer"
+                      onClick={() => setNql(expr)}
+                    >
+                      {expr}
+                    </td>
+                    <td className="px-3 py-1.5 text-gray-600 dark:text-gray-400">{desc}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Error */}
@@ -146,6 +205,29 @@ export default function SearchPanel() {
               result.hits.map((hit) => <NewsCard key={hit.id} hit={hit} />)
             )}
           </div>
+
+          {/* Pagination */}
+          {result.total > PAGE_SIZE && (
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <button
+                onClick={() => doSearch(page - 1)}
+                disabled={page === 0 || loading}
+                className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                &lt; 이전
+              </button>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {page + 1} / {totalPages}
+              </span>
+              <button
+                onClick={() => doSearch(page + 1)}
+                disabled={page + 1 >= totalPages || loading}
+                className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                다음 &gt;
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

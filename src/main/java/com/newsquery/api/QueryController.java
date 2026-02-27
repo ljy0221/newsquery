@@ -62,7 +62,7 @@ public class QueryController {
             JsonNode retriever = rrfScorer.buildRetriever(boolQuery, keywords, vector);
 
             // 5. ES 검색
-            NewsSearchResponse result = newsSearchService.searchWithRrf(retriever);
+            NewsSearchResponse result = newsSearchService.searchWithRrf(retriever, request.page() * 20);
             return ResponseEntity.ok(result);
 
         } catch (IllegalArgumentException e) {

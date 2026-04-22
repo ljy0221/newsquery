@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -35,7 +36,7 @@ class QueryControllerTest {
 
     @Test
     void postQuery_withValidNql_returns200() throws Exception {
-        var request   = new QueryRequest("keyword(\"HBM\") AND sentiment == \"positive\"");
+        var request   = new QueryRequest("keyword(\"HBM\") AND sentiment == \"positive\"", 0);
         var fakeExpr  = new NQLExpression.KeywordExpr("HBM", null);
         ObjectNode fakeBoolQuery   = new ObjectMapper().createObjectNode();
         ObjectNode fakeRetriever   = new ObjectMapper().createObjectNode();
@@ -44,7 +45,7 @@ class QueryControllerTest {
         when(nqlQueryParser.buildQuery(any())).thenReturn(fakeBoolQuery);
         when(keywordExtractor.extract(any())).thenReturn(List.of());
         when(rrfScorer.buildRetriever(any(), any(), any())).thenReturn(fakeRetriever);
-        when(newsSearchService.searchWithRrf(any())).thenReturn(new NewsSearchResponse(0L, List.of()));
+        when(newsSearchService.searchWithRrf(any(), anyInt())).thenReturn(new NewsSearchResponse(0L, List.of()));
 
         mockMvc.perform(post("/api/query")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -54,7 +55,7 @@ class QueryControllerTest {
 
     @Test
     void postQuery_withEmptyNql_returns400() throws Exception {
-        var request = new QueryRequest("");
+        var request = new QueryRequest("", 0);
 
         mockMvc.perform(post("/api/query")
                 .contentType(MediaType.APPLICATION_JSON)

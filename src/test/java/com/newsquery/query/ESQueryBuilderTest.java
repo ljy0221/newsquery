@@ -16,15 +16,15 @@ class ESQueryBuilderTest {
     void keywordWithoutBoost() throws Exception {
         var expr = new NQLExpression.KeywordExpr("HBM", null);
         JsonNode result = mapper.readTree(builder.build(expr).toString());
-        assertThat(result.path("match").path("content").asText()).isEqualTo("HBM");
+        assertThat(result.path("multi_match").path("query").asText()).isEqualTo("HBM");
     }
 
     @Test
     void keywordWithBoost() throws Exception {
         var expr = new NQLExpression.KeywordExpr("HBM", 1.5);
         JsonNode result = mapper.readTree(builder.build(expr).toString());
-        assertThat(result.path("match").path("content").path("query").asText()).isEqualTo("HBM");
-        assertThat(result.path("match").path("content").path("boost").asDouble()).isEqualTo(1.5);
+        assertThat(result.path("multi_match").path("query").asText()).isEqualTo("HBM");
+        assertThat(result.path("multi_match").path("boost").asDouble()).isEqualTo(1.5);
     }
 
     @Test

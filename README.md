@@ -785,5 +785,21 @@ A: `docker exec newsquery-kafka kafka-console-consumer.sh --bootstrap-server loc
 
 ---
 
+---
+
+## 문서 네비게이션
+
+**전체 문서 인덱스:** [`docs/INDEX.md`](docs/INDEX.md)
+
+| 문서 | 용도 |
+| --- | --- |
+| **[빠른 참고서](docs/QUICK_REFERENCE.md)** | 자주 사용되는 명령어, API, 쿼리 치트시트 |
+| **[시각적 가이드](docs/VISUAL_GUIDE.md)** | 전체 아키텍처, 플로우, 다이어그램 |
+| **[스크린샷 가이드](docs/SCREENSHOTS_GUIDE.md)** | 각 단계별 실행 화면 및 예상 출력 |
+| **[환경 설정](docs/SETUP_GUIDE.md)** | 단계별 환경 구성 방법 |
+| **[Excalidraw 다이어그램](docs/diagrams/)** | 편집 가능한 시스템 다이어그램 |
+
+---
+
 **마지막 업데이트:** 2026-04-22  
 **개발팀:** 2026b101@gmail.com

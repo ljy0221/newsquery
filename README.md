@@ -45,69 +45,90 @@ keyword("HBM") > 5 AND sentiment != "negative" AND source IN ["Reuters", "Bloomb
 
 ### NQL 처리 파이프라인
 
-```
-NQL 쿼리 입력
-    ↓
-[ANTLR4 Parser] → AST 생성
-    ↓
-[NQLVisitor] → 중간 표현(IR) 변환
-    ↓
-[ESQueryBuilder] → Elasticsearch Query DSL
-    ↓
-[KeywordExtractor] → 벡터 임베딩 키워드 추출
-    ↓
-[EmbeddingClient] → FastAPI 호출 (384차원 벡터)
-    ↓
-[RRFScorer] → BM25 + kNN 통합 (Reciprocal Rank Fusion)
-    ↓
-[Elasticsearch] → 검색 실행 및 결과 반환
-    ↓
-NewsSearchResponse (랭킹된 뉴스 목록)
+```mermaid
+graph TD
+    A["NQL 쿼리 입력<br/>keyword('AI') AND sentiment='positive'"]
+    B["ANTLR4 Lexer/Parser<br/>NQL.g4 문법"]
+    C["Abstract Syntax Tree<br/>AST 생성"]
+    D["NQLVisitor<br/>IR 변환"]
+    E["NQLExpression<br/>sealed interface"]
+    F["ESQueryBuilder<br/>Query DSL 생성"]
+    G["Elasticsearch Query DSL<br/>JSON"]
+    H["KeywordExtractor<br/>벡터 키워드 추출"]
+    I["EmbeddingClient<br/>FastAPI 호출<br/>384-dim vector"]
+    J["RRFScorer<br/>BM25 + kNN 통합"]
+    K["Elasticsearch<br/>bool query + kNN"]
+    L["NewsSearchResponse<br/>랭킹된 뉴스 목록"]
+
+    style A fill:#dbeafe
+    style B fill:#fecaca
+    style C fill:#fecaca
+    style D fill:#fbbf24
+    style E fill:#fbbf24
+    style F fill:#86efac
+    style G fill:#86efac
+    style H fill:#a5f3fc
+    style I fill:#d8b4fe
+    style J fill:#fca5a5
+    style K fill:#99f6e4
+    style L fill:#bfdbfe
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> J
+    E --> H
+    H --> I
+    I --> J
+    J --> K
+    K --> L
 ```
 
-**상세 플로우 및 AST 다이어그램:** [`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md#2-nql-쿼리-처리-플로우)  
-**Mermaid 다이어그램:** [`docs/diagrams/architecture.mmd`](docs/diagrams/architecture.mmd) (GitHub에서 렌더링됨)
+**상세 예시 및 계산 과정:** [`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md#2-nql-쿼리-처리-플로우) 참고
 
 ---
 
 ### 데이터 파이프라인
 
-```
-┌─────────────────────────────────────────┐
-│          데이터 수집 (15분/5분 주기)      │
-│  GDELT 2.0  |  RSS 피드                 │
-└──────┬──────────────────────┬───────────┘
-       │                      │
-       ↓                      ↓
-┌─────────────────────────────────────────┐
-│  Producer (gdelt_producer.py / rss_...)  │
-└──────┬──────────────────────┬───────────┘
-       │                      │
-       └──────────┬───────────┘
-                  ↓
-          ┌───────────────┐
-          │ Kafka Topic   │
-          │  news-raw     │
-          └───────┬───────┘
-       ┌──────────┼──────────┐
-       ↓                     ↓
-┌────────────────┐  ┌─────────────────┐
-│ news_worker.py │  │ spark_archive.py│
-│(임베딩+ES bulk)│  │ (Iceberg 저장)  │
-└────────┬───────┘  └────────┬────────┘
-         ↓                    ↓
-    ┌──────────┐         ┌──────────┐
-    │Elasticsearch│      │ Iceberg  │
-    │(검색)     │       │(아카이빙)│
-    └──────────┘       └──────────┘
+```mermaid
+graph LR
+    A["GDELT 2.0<br/>15분 주기"]
+    B["RSS 피드<br/>5분 주기"]
+    C["gdelt_producer.py"]
+    D["rss_producer.py"]
+    E["Kafka Topic<br/>news-raw<br/>3 Partitions"]
+    F["news_worker.py<br/>Kafka Consumer<br/>Embedding + ES bulk"]
+    G["spark_archive.py<br/>Spark Streaming<br/>Iceberg writer"]
+    H["Elasticsearch<br/>Index: news<br/>검색 + 분석"]
+    I["Iceberg<br/>Data Lake<br/>장기 아카이빙"]
+
+    style A fill:#dbeafe
+    style B fill:#fecaca
+    style C fill:#fbbf24
+    style D fill:#fbbf24
+    style E fill:#86efac
+    style F fill:#a5f3fc
+    style G fill:#a5f3fc
+    style H fill:#d8b4fe
+    style I fill:#99f6e4
+
+    A --> C
+    B --> D
+    C --> E
+    D --> E
+    E --> F
+    E --> G
+    F --> H
+    G --> I
 ```
 
-**상세 Kafka 메시지 흐름 및 저장소 비교:**
+**상세 설명:**
 
 - [`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md#4-kafka-데이터-흐름) (Kafka 플로우)
 - [`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md#5-데이터-저장소-비교) (ES vs Iceberg)
-
-**Mermaid 다이어그램:** [`docs/diagrams/data-pipeline.mmd`](docs/diagrams/data-pipeline.mmd) (GitHub에서 렌더링됨)
 
 ---
 
@@ -115,17 +136,39 @@ NewsSearchResponse (랭킹된 뉴스 목록)
 
 **BM25 (Keyword-based)** + **Vector Similarity (Semantic)**를 통합:
 
-```text
-1. BM25 검색 → 키워드 기반 순위
-2. kNN 벡터 검색 → 의미 기반 순위
-3. RRF 통합: Score = 1/(60 + rank_bm25) + 1/(60 + rank_vector)
-4. 최종 순위 정렬 → NewsSearchResponse
+```mermaid
+graph TD
+    A["Elasticsearch Query<br/>Bool Query"]
+    B["kNN Vector Search<br/>Dense Vector"]
+    C["BM25 검색<br/>키워드 매칭"]
+    D["Vector 검색<br/>의미적 유사도"]
+    E["BM25 Ranking<br/>score_1, score_2, ..."]
+    F["Vector Ranking<br/>similarity_1, similarity_2, ..."]
+    G["RRF 통합<br/>Score = 1/60+rank_bm25<br/>+ 1/60+rank_vector"]
+    H["최종 랭킹<br/>상위 결과부터 정렬"]
+    I["NewsSearchResponse<br/>JSON 응답"]
+
+    style A fill:#dbeafe
+    style B fill:#fecaca
+    style C fill:#fbbf24
+    style D fill:#86efac
+    style E fill:#fbbf24
+    style F fill:#86efac
+    style G fill:#d8b4fe
+    style H fill:#99f6e4
+    style I fill:#bfdbfe
+
+    A --> C
+    B --> D
+    C --> E
+    D --> F
+    E --> G
+    F --> G
+    G --> H
+    H --> I
 ```
 
-**상세 예시 및 계산 과정:**  
-[`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md#3-rrf-reciprocal-rank-fusion-스코어링) 참고
-
-**Mermaid 다이어그램:** [`docs/diagrams/rrf-scoring.mmd`](docs/diagrams/rrf-scoring.mmd) (GitHub에서 렌더링됨)
+**상세 예시 및 계산 과정:** [`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md#3-rrf-reciprocal-rank-fusion-스코어링) 참고
 
 ---
 

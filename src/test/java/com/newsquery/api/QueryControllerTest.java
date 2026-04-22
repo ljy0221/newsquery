@@ -62,4 +62,56 @@ class QueryControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void postQuery_withInvalidNql_returns400() throws Exception {
+        var request = new QueryRequest("invalid syntax @@@", 0);
+        when(nqlQueryParser.parseToExpression(any()))
+                .thenThrow(new IllegalArgumentException("문법 오류"));
+
+        mockMvc.perform(post("/api/query")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void postQuery_withPage_sendsCorrectFrom() throws Exception {
+        var request = new QueryRequest("keyword(\"test\")", 2);
+        var fakeExpr = new NQLExpression.KeywordExpr("test", null);
+        ObjectNode fakeBoolQuery = new ObjectMapper().createObjectNode();
+        ObjectNode fakeRetriever = new ObjectMapper().createObjectNode();
+
+        when(nqlQueryParser.parseToExpression(any())).thenReturn(fakeExpr);
+        when(nqlQueryParser.buildQuery(any())).thenReturn(fakeBoolQuery);
+        when(keywordExtractor.extract(any())).thenReturn(java.util.List.of());
+        when(rrfScorer.buildRetriever(any(), any(), any())).thenReturn(fakeRetriever);
+        when(newsSearchService.searchWithRrf(any(), anyInt())).thenReturn(new NewsSearchResponse(0L, java.util.List.of()));
+
+        mockMvc.perform(post("/api/query")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void postQuery_withEmbedding_includesVector() throws Exception {
+        var request = new QueryRequest("keyword(\"HBM\")", 0);
+        var fakeExpr = new NQLExpression.KeywordExpr("HBM", null);
+        ObjectNode fakeBoolQuery = new ObjectMapper().createObjectNode();
+        ObjectNode fakeRetriever = new ObjectMapper().createObjectNode();
+
+        when(nqlQueryParser.parseToExpression(any())).thenReturn(fakeExpr);
+        when(nqlQueryParser.buildQuery(any())).thenReturn(fakeBoolQuery);
+        when(keywordExtractor.extract(any()))
+                .thenReturn(java.util.List.of(new NQLExpression.KeywordExpr("HBM", null)));
+        when(embeddingClient.embed(any())).thenReturn(new float[]{0.1f, 0.2f, 0.3f});
+        when(rrfScorer.buildRetriever(any(), any(), any())).thenReturn(fakeRetriever);
+        when(newsSearchService.searchWithRrf(any(), anyInt())).thenReturn(new NewsSearchResponse(0L, java.util.List.of()));
+
+        mockMvc.perform(post("/api/query")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk());
+    }
 }

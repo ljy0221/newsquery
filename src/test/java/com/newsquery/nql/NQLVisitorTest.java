@@ -67,4 +67,52 @@ class NQLVisitorTest {
         assertThat(and.left()).isEqualTo(new NQLExpression.KeywordExpr("HBM", 2.0));
         assertThat(and.right()).isEqualTo(new NQLExpression.CompareExpr("sentiment", "!=", "negative"));
     }
+
+    @Test
+    void orExpression() {
+        var result = parse("sentiment == \"positive\" OR sentiment == \"neutral\"");
+        assertThat(result).isInstanceOf(NQLExpression.OrExpr.class);
+    }
+
+    @Test
+    void compareWithRange() {
+        var result = parse("publishedAt >= \"2024-01-01\"");
+        assertThat(result).isEqualTo(new NQLExpression.CompareExpr("publishedAt", ">=", "2024-01-01"));
+    }
+
+    @Test
+    void countryIn() {
+        var result = parse("country IN [\"KR\", \"US\", \"JP\"]");
+        assertThat(result).isEqualTo(new NQLExpression.InExpr("country", List.of("KR", "US", "JP")));
+    }
+
+    @Test
+    void matchAll() {
+        var result = parse("*");
+        assertThat(result).isInstanceOf(NQLExpression.MatchAllExpr.class);
+    }
+
+    @Test
+    void multiKeywordAnd() {
+        var result = parse("keyword(\"AI\") AND keyword(\"ML\") AND keyword(\"Deep Learning\")");
+        assertThat(result).isInstanceOf(NQLExpression.AndExpr.class);
+    }
+
+    @Test
+    void nestedNotExpression() {
+        var result = parse("!(!sentiment == \"negative\")");
+        assertThat(result).isInstanceOf(NQLExpression.NotExpr.class);
+    }
+
+    @Test
+    void scoreRange() {
+        var result = parse("score > 5.0");
+        assertThat(result).isEqualTo(new NQLExpression.CompareExpr("score", ">", "5.0"));
+    }
+
+    @Test
+    void complexAndOrPrecedence() {
+        var result = parse("keyword(\"HBM\") AND sentiment == \"positive\" OR category == \"TECH\"");
+        assertThat(result).isInstanceOf(NQLExpression.OrExpr.class);
+    }
 }

@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-04-23T08:49:57.628024",
+  "results": {
+    "Simple keyword": {
+      "query": "keyword(\"AI\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 46.09998067220052,
+      "min_ms": 40.772199630737305,
+      "max_ms": 51.01633071899414,
+      "stddev_ms": 5.134443692930974,
+      "p95_ms": 51.01633071899414
+    },
+    "Keyword + sentiment": {
+      "query": "keyword(\"technology\") AND sentiment == \"positive\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 48.910299936930336,
+      "min_ms": 46.721458435058594,
+      "max_ms": 52.74391174316406,
+      "stddev_ms": 3.3311316361952548,
+      "p95_ms": 52.74391174316406
+    },
+    "OR query": {
+      "query": "keyword(\"AI\") OR keyword(\"machine learning\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 45.94008127848307,
+      "min_ms": 38.552284240722656,
+      "max_ms": 52.56295204162598,
+      "stddev_ms": 7.036585621664632,
+      "p95_ms": 52.56295204162598
+    },
+    "Keyword + source": {
+      "query": "keyword(\"blockchain\") AND source IN [\"Reuters\", \"Bloomberg\"]",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 54.08891042073568,
+      "min_ms": 19.306659698486328,
+      "max_ms": 86.27152442932129,
+      "stddev_ms": 33.55803719508975,
+      "p95_ms": 86.27152442932129
+    },
+    "Complex query": {
+      "query": "(keyword(\"AI\") * 2.0 OR keyword(\"tech\")) AND sentiment != \"negative\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 32.11188316345215,
+      "min_ms": 29.24060821533203,
+      "max_ms": 35.72654724121094,
+      "stddev_ms": 3.3062549524202547,
+      "p95_ms": 35.72654724121094
+    },
+    "Match all": {
+      "query": "*",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 23.526350657145183,
+      "min_ms": 13.376712799072266,
+      "max_ms": 30.669450759887695,
+      "stddev_ms": 9.029903017254789,
+      "p95_ms": 30.669450759887695
+    }
+  }
+}

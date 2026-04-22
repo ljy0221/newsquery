@@ -25,7 +25,9 @@ public class KeywordExtractor {
             collect(or.right(), acc);
         } else if (expr instanceof NQLExpression.NotExpr not) {
             collect(not.expr(), acc);
+        } else if (expr instanceof NQLExpression.AggregationExpr agg) {
+            collect(agg.expr(), acc);
         }
-        // CompareExpr, InExpr — 키워드 없음, 무시
+        // CompareExpr, InExpr, BetweenExpr — 키워드 없음, 무시
     }
 }

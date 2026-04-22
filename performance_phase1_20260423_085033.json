@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-04-23T08:50:34.846858",
+  "results": {
+    "Simple keyword": {
+      "query": "keyword(\"AI\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 109.9258263905843,
+      "min_ms": 38.399696350097656,
+      "max_ms": 244.51303482055664,
+      "stddev_ms": 116.6327646058051,
+      "p95_ms": 244.51303482055664
+    },
+    "Keyword + sentiment": {
+      "query": "keyword(\"technology\") AND sentiment == \"positive\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 46.281894048055015,
+      "min_ms": 37.85371780395508,
+      "max_ms": 52.77895927429199,
+      "stddev_ms": 7.647718650646739,
+      "p95_ms": 52.77895927429199
+    },
+    "OR query": {
+      "query": "keyword(\"AI\") OR keyword(\"machine learning\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 47.814369201660156,
+      "min_ms": 37.819862365722656,
+      "max_ms": 54.05616760253906,
+      "stddev_ms": 8.74451355906593,
+      "p95_ms": 54.05616760253906
+    },
+    "Keyword + source": {
+      "query": "keyword(\"blockchain\") AND source IN [\"Reuters\", \"Bloomberg\"]",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 47.11294174194336,
+      "min_ms": 42.1602725982666,
+      "max_ms": 51.187992095947266,
+      "stddev_ms": 4.577400013893372,
+      "p95_ms": 51.187992095947266
+    },
+    "Complex query": {
+      "query": "(keyword(\"AI\") * 2.0 OR keyword(\"tech\")) AND sentiment != \"negative\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 46.02527618408203,
+      "min_ms": 31.91542625427246,
+      "max_ms": 54.413795471191406,
+      "stddev_ms": 12.292045094187,
+      "p95_ms": 54.413795471191406
+    },
+    "Match all": {
+      "query": "*",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 28.212706247965496,
+      "min_ms": 21.30889892578125,
+      "max_ms": 31.676530838012695,
+      "stddev_ms": 5.978884408058978,
+      "p95_ms": 31.676530838012695
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-04-23T08:50:09.882665",
+  "results": {
+    "BETWEEN query": {
+      "query": "keyword(\"technology\") AND publishedAt BETWEEN \"2026-03-01\" AND \"2026-04-23\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 42.38120714823405,
+      "min_ms": 33.63370895385742,
+      "max_ms": 49.43704605102539,
+      "stddev_ms": 8.036333070548187,
+      "p95_ms": 49.43704605102539
+    },
+    "CONTAINS pattern": {
+      "query": "source CONTAINS \"Reuters\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 60.41097640991211,
+      "min_ms": 46.741485595703125,
+      "max_ms": 76.52044296264648,
+      "stddev_ms": 15.038673035510877,
+      "p95_ms": 76.52044296264648
+    },
+    "LIKE pattern": {
+      "query": "keyword(\"AI\") AND source LIKE \"tech\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 37.94105847676595,
+      "min_ms": 25.644779205322266,
+      "max_ms": 56.5638542175293,
+      "stddev_ms": 16.401704419969622,
+      "p95_ms": 56.5638542175293
+    }
+  }
+}

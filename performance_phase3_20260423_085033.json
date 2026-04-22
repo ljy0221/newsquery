@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-04-23T08:50:35.510797",
+  "results": {
+    "GROUP BY category": {
+      "query": "keyword(\"AI\") GROUP BY category LIMIT 5",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 38.56031099955241,
+      "min_ms": 32.155752182006836,
+      "max_ms": 49.27396774291992,
+      "stddev_ms": 9.337267785504169,
+      "p95_ms": 49.27396774291992
+    },
+    "GROUP BY sentiment": {
+      "query": "keyword(\"technology\") GROUP BY sentiment",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 21.71214421590169,
+      "min_ms": 18.429994583129883,
+      "max_ms": 24.759769439697266,
+      "stddev_ms": 3.171397752965149,
+      "p95_ms": 24.759769439697266
+    },
+    "BOOST + GROUP BY": {
+      "query": "keyword(\"news\") BOOST recency(publishedAt) GROUP BY source LIMIT 10",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 32.54127502441406,
+      "min_ms": 30.28392791748047,
+      "max_ms": 34.946441650390625,
+      "stddev_ms": 2.3347690539005184,
+      "p95_ms": 34.946441650390625
+    }
+  }
+}

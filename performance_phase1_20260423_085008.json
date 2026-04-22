@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-04-23T08:50:09.456296",
+  "results": {
+    "Simple keyword": {
+      "query": "keyword(\"AI\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 28.991540273030598,
+      "min_ms": 15.124797821044922,
+      "max_ms": 43.59292984008789,
+      "stddev_ms": 14.2482776134934,
+      "p95_ms": 43.59292984008789
+    },
+    "Keyword + sentiment": {
+      "query": "keyword(\"technology\") AND sentiment == \"positive\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 31.804641087849934,
+      "min_ms": 30.116558074951172,
+      "max_ms": 33.61368179321289,
+      "stddev_ms": 1.7516967910377252,
+      "p95_ms": 33.61368179321289
+    },
+    "OR query": {
+      "query": "keyword(\"AI\") OR keyword(\"machine learning\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 26.23605728149414,
+      "min_ms": 19.030332565307617,
+      "max_ms": 38.45787048339844,
+      "stddev_ms": 10.640872387268207,
+      "p95_ms": 38.45787048339844
+    },
+    "Keyword + source": {
+      "query": "keyword(\"blockchain\") AND source IN [\"Reuters\", \"Bloomberg\"]",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 31.440337498982746,
+      "min_ms": 18.74852180480957,
+      "max_ms": 41.41044616699219,
+      "stddev_ms": 11.573524562618049,
+      "p95_ms": 41.41044616699219
+    },
+    "Complex query": {
+      "query": "(keyword(\"AI\") * 2.0 OR keyword(\"tech\")) AND sentiment != \"negative\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 21.18055025736491,
+      "min_ms": 15.929222106933594,
+      "max_ms": 31.63599967956543,
+      "stddev_ms": 9.05471557187155,
+      "p95_ms": 31.63599967956543
+    },
+    "Match all": {
+      "query": "*",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 27.043581008911133,
+      "min_ms": 18.020153045654297,
+      "max_ms": 38.85340690612793,
+      "stddev_ms": 10.692479912934937,
+      "p95_ms": 38.85340690612793
+    }
+  }
+}

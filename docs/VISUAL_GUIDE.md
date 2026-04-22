@@ -92,177 +92,104 @@
 
 ## 2. NQL 쿼리 처리 플로우
 
-```
-Input: "keyword(\"AI\") AND sentiment = \"positive\" AND source IN [\"Reuters\", \"Bloomberg\"]"
+**Mermaid 다이어그램:**
 
-        │
-        ▼
-    ┌─────────────────────────────────┐
-    │   ANTLR4 Lexer/Parser          │
-    │   (NQL.g4 문법 기반)           │
-    └──────────┬──────────────────────┘
-               │
-        Token 스트림 생성
-        │
-        ▼
-    ┌─────────────────────────────────┐
-    │   Abstract Syntax Tree (AST)    │
-    │                                 │
-    │    BinaryExpr (AND)            │
-    │    ├─ left: BinaryExpr (AND)   │
-    │    │  ├─ left: KeywordExpr     │
-    │    │  │  └─ terms: ["AI"]      │
-    │    │  └─ right: ComparisonExpr │
-    │    │     ├─ field: sentiment   │
-    │    │     ├─ op: EQUALS         │
-    │    │     └─ value: "positive"  │
-    │    └─ right: InExpr            │
-    │       ├─ field: source         │
-    │       └─ values: ["Reuters",   │
-    │          "Bloomberg"]          │
-    └──────────┬──────────────────────┘
-               │
-        ▼
-    ┌─────────────────────────────────┐
-    │   NQLVisitorImpl                 │
-    │   (AST → Intermediate Rep.)     │
-    │   sealed interface IR 변환      │
-    └──────────┬──────────────────────┘
-               │
-        ▼
-    ┌─────────────────────────────────┐
-    │   NQLExpression (IR)            │
-    │   - KeywordExpr                 │
-    │   - ComparisonExpr              │
-    │   - InExpr                      │
-    └──────────┬──────────────────────┘
-               │
-        ▼
-    ┌─────────────────────────────────┐
-    │   ESQueryBuilder                │
-    │   (IR → ES Query DSL)           │
-    └──────────┬──────────────────────┘
-               │
-        ▼
-    ┌──────────────────────────────────────┐
-    │   Elasticsearch Query DSL (JSON)     │
-    │                                      │
-    │   {                                  │
-    │     "bool": {                        │
-    │       "must": [                      │
-    │         {"multi_match": {...}},      │
-    │         {"match": {...}},            │
-    │         {"terms": {...}}             │
-    │       ]                              │
-    │     }                                │
-    │   }                                  │
-    └──────────┬───────────────────────────┘
-               │
-        (병렬 처리)
-        │
-        ├─────────────────┬──────────────────┐
-        │                 │                  │
-        ▼                 ▼                  ▼
-    ┌──────────┐      ┌──────────┐      ┌──────────┐
-    │KeywordExt│      │EmbedClient│      │ES Search │
-    │(BM25)    │      │(kNN)      │      │(bool)    │
-    └────┬─────┘      └────┬─────┘      └────┬─────┘
-         │                  │                  │
-        BM25 ranks      Vector ranks       Bool matches
-        │                  │                  │
-        └──────┬───────────┴──────┬───────────┘
-               │                  │
-               ▼                  ▼
-        ┌──────────────────────────────┐
-        │   RRFScorer                  │
-        │                              │
-        │   Score = 1/(60+rank_bm25)  │
-        │         + 1/(60+rank_vec)   │
-        │                              │
-        │   Top 20 by RFF Score        │
-        └──────────┬───────────────────┘
-                   │
-                   ▼
-        ┌─────────────────────────┐
-        │ NewsSearchResponse       │
-        │                          │
-        │ {                        │
-        │   total: 45,            │
-        │   items: [{             │
-        │     id, title, content, │
-        │     source, sentiment,  │
-        │     rffScore: 1.85,     │
-        │     ...                 │
-        │   }, ...]               │
-        │ }                        │
-        └─────────────────────────┘
-                   │
-                   ▼
-        ┌─────────────────────────┐
-        │ JSON 응답 전송          │
-        │ (Frontend로)           │
-        └─────────────────────────┘
+```mermaid
+graph TD
+    A["NQL 쿼리 입력<br/>keyword('AI') AND sentiment='positive'"]
+    B["ANTLR4 Lexer/Parser<br/>NQL.g4 문법"]
+    C["Abstract Syntax Tree<br/>AST 생성"]
+    D["NQLVisitor<br/>IR 변환"]
+    E["NQLExpression<br/>sealed interface"]
+    F["ESQueryBuilder<br/>Query DSL 생성"]
+    G["Elasticsearch Query DSL<br/>JSON"]
+    H["KeywordExtractor<br/>벡터 키워드 추출"]
+    I["EmbeddingClient<br/>FastAPI 호출<br/>384-dim vector"]
+    J["RRFScorer<br/>BM25 + kNN 통합"]
+    K["Elasticsearch<br/>bool query + kNN"]
+    L["NewsSearchResponse<br/>랭킹된 뉴스 목록"]
+
+    style A fill:#dbeafe
+    style B fill:#fecaca
+    style C fill:#fecaca
+    style D fill:#fbbf24
+    style E fill:#fbbf24
+    style F fill:#86efac
+    style G fill:#86efac
+    style H fill:#a5f3fc
+    style I fill:#d8b4fe
+    style J fill:#fca5a5
+    style K fill:#99f6e4
+    style L fill:#bfdbfe
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> J
+    E --> H
+    H --> I
+    I --> J
+    J --> K
+    K --> L
 ```
 
 ---
 
 ## 3. RRF (Reciprocal Rank Fusion) 스코어링
 
+**Mermaid 다이어그램:**
+
+```mermaid
+graph TD
+    A["Elasticsearch Query<br/>Bool Query"]
+    B["kNN Vector Search<br/>Dense Vector"]
+    C["BM25 검색<br/>키워드 매칭"]
+    D["Vector 검색<br/>의미적 유사도"]
+    E["BM25 Ranking<br/>score_1, score_2, ..."]
+    F["Vector Ranking<br/>similarity_1, similarity_2, ..."]
+    G["RRF 통합<br/>Score = 1/60+rank_bm25<br/>+ 1/60+rank_vector"]
+    H["최종 랭킹<br/>상위 결과부터 정렬"]
+    I["NewsSearchResponse<br/>JSON 응답"]
+
+    style A fill:#dbeafe
+    style B fill:#fecaca
+    style C fill:#fbbf24
+    style D fill:#86efac
+    style E fill:#fbbf24
+    style F fill:#86efac
+    style G fill:#d8b4fe
+    style H fill:#99f6e4
+    style I fill:#bfdbfe
+
+    A --> C
+    B --> D
+    C --> E
+    D --> F
+    E --> G
+    F --> G
+    G --> H
+    H --> I
 ```
-Input Documents: [Doc1, Doc2, Doc3, Doc4, Doc5]
 
-Step 1: BM25 (Keyword-based) Ranking
-─────────────────────────────────────
+**RRF 점수 계산 예시:**
 
-Query: "artificial intelligence"
+| Doc | BM25 Rank | BM25 RRF | Vector Rank | Vector RRF | 총점 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1 | 0.0164 | 3 | 0.0159 | 0.0323 |
+| 2 | 4 | 0.0156 | 1 | 0.0164 | 0.0320 |
+| 3 | 2 | 0.0161 | 2 | 0.0161 | 0.0322 |
+| 4 | N/A | 0 | 4 | 0.0156 | 0.0156 |
+| 5 | 3 | 0.0159 | N/A | 0 | 0.0159 |
 
-Doc1: "AI revolution in healthcare" ──────► Rank 1 (score: 8.5)
-Doc3: "Deep learning advances"      ──────► Rank 2 (score: 7.2)
-Doc5: "Neural networks explained"   ──────► Rank 3 (score: 6.8)
-Doc2: "Quantum computing basics"    ──────► Rank 4 (score: 3.2)
-(Doc4: Not matched)
-
-Step 2: Vector Search (Semantic) Ranking
-──────────────────────────────────────────
-
-Query Vector: [0.12, -0.34, ..., 0.56] (384-dim, from "artificial intelligence")
-Similarity: cosine
-
-Doc2: "Machine intelligence systems"  ──────► Rank 1 (similarity: 0.89)
-Doc3: "Deep learning advances"        ──────► Rank 2 (similarity: 0.87)
-Doc1: "AI revolution in healthcare"   ──────► Rank 3 (similarity: 0.82)
-Doc4: "Smart algorithms"              ──────► Rank 4 (similarity: 0.74)
-(Doc5: Below threshold)
-
-Step 3: RRF Score Calculation
-─────────────────────────────
-
-RRF(rank) = 1 / (60 + rank)
-
-┌─────┬──────────┬───────────┬────────────┬────────────┬──────────┐
-│ Doc │ BM25 Rk  │ BM25 RRF  │ Vec Rk     │ Vec RRF    │ Total    │
-├─────┼──────────┼───────────┼────────────┼────────────┼──────────┤
-│  1  │     1    │ 1/61=0.0164│     3     │ 1/63=0.0159│  0.0323  │
-│  2  │     4    │ 1/64=0.0156│     1     │ 1/61=0.0164│  0.0320  │
-│  3  │     2    │ 1/62=0.0161│     2     │ 1/62=0.0161│  0.0322  │
-│  4  │    N/A   │     0     │     4     │ 1/64=0.0156│  0.0156  │
-│  5  │     3    │ 1/63=0.0159│    N/A    │     0     │  0.0159  │
-└─────┴──────────┴───────────┴────────────┴────────────┴──────────┘
-
-Step 4: Final Ranking (by Total RRF Score)
-────────────────────────────────────────────
-
-1. Doc 3: 0.0322 ✓ (BM25 + Vector 모두 상위권)
-2. Doc 1: 0.0323 ✓ (BM25 우수, Vector 양호)
-3. Doc 2: 0.0320 ✓ (Vector 우수, BM25 양호)
-4. Doc 5: 0.0159   (BM25만 해당)
-5. Doc 4: 0.0156   (Vector만 해당)
-
-결과:
-• Doc 3이 최고: 두 신호 모두 반영
-• Doc 1, 2는 유사점수 (complementary signals)
-• Doc 5, 4는 한쪽 신호만 있음
-```
+**최종 순위 (RRF 점수 기준):**
+1. Doc 3: 0.0322 (BM25 + Vector 모두 상위권)
+2. Doc 1: 0.0323 (BM25 우수, Vector 양호)
+3. Doc 2: 0.0320 (Vector 우수, BM25 양호)
+4. Doc 5: 0.0159 (BM25만 해당)
+5. Doc 4: 0.0156 (Vector만 해당)
 
 ---
 

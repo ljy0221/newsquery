@@ -62,9 +62,14 @@ public class NQLVisitorImpl extends NQLBaseVisitor<NQLExpression> {
                 .map(v -> stripQuotes(v.getText()))
                 .collect(Collectors.toList());
             return new NQLExpression.InExpr(field, values);
+        } else if (ctx.value().size() > 1) {
+            // BETWEEN: field BETWEEN value AND value
+            String start = stripQuotes(ctx.value(0).getText());
+            String end = stripQuotes(ctx.value(1).getText());
+            return new NQLExpression.BetweenExpr(field, start, end);
         } else {
             String op = ctx.compOp().getText();
-            String value = stripQuotes(ctx.value().getText());
+            String value = stripQuotes(ctx.value(0).getText());
             return new NQLExpression.CompareExpr(field, op, value);
         }
     }

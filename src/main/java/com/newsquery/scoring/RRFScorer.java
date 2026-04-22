@@ -16,6 +16,19 @@ public class RRFScorer {
     private static final int KNN_CANDIDATES = 100;
     private static final String VECTOR_FIELD = "content_vector";
 
+    /**
+     * RRF 파라미터 설명:
+     * - RANK_CONSTANT (60): RRF 공식 1/(k + rank)의 k값. 크클수록 순위 차이를 완화
+     * - RANK_WINDOW_SIZE (100): 각 retriever에서 반환할 최대 문서 수
+     * - KNN_CANDIDATES (100): kNN 검색에서 평가할 후보 문서 수
+     * - VECTOR_FIELD: content_vector (384 dims, all-MiniLM-L6-v2 모델)
+     *
+     * 성능 특성:
+     * - 기본값은 balanced 설정 (정확도 vs 속도)
+     * - 큰 데이터셋: RANK_WINDOW_SIZE를 50으로 줄여서 성능 향상
+     * - 정확도 중시: RANK_CONSTANT를 120으로 올려서 순위 가중치 증가
+     */
+
     private final ObjectMapper mapper = new ObjectMapper();
 
     /**

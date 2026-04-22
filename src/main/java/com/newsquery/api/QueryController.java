@@ -2,6 +2,7 @@ package com.newsquery.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.newsquery.embedding.EmbeddingClient;
+import com.newsquery.monitoring.QueryMetrics;
 import com.newsquery.nql.KeywordExtractor;
 import com.newsquery.nql.NQLExpression;
 import com.newsquery.nql.NQLQueryParser;
@@ -23,32 +24,48 @@ public class QueryController {
     private final EmbeddingClient embeddingClient;
     private final RRFScorer rrfScorer;
     private final NewsSearchService newsSearchService;
+    private final QueryMetrics queryMetrics;
 
     public QueryController(NQLQueryParser nqlQueryParser,
                            KeywordExtractor keywordExtractor,
                            EmbeddingClient embeddingClient,
                            RRFScorer rrfScorer,
-                           NewsSearchService newsSearchService) {
+                           NewsSearchService newsSearchService,
+                           QueryMetrics queryMetrics) {
         this.nqlQueryParser    = nqlQueryParser;
         this.keywordExtractor  = keywordExtractor;
         this.embeddingClient   = embeddingClient;
         this.rrfScorer         = rrfScorer;
         this.newsSearchService = newsSearchService;
+        this.queryMetrics      = queryMetrics;
     }
 
     @PostMapping("/query")
     public ResponseEntity<?> query(@RequestBody QueryRequest request) {
         if (request.nql() == null || request.nql().isBlank()) {
-            return ResponseEntity.badRequest().body("nql 필드가 비어있습니다.");
+            queryMetrics.recordError();
+            return ResponseEntity.badRequest().body(
+                new ErrorResponse("NQL 쿼리가 비어있습니다. 검색 조건을 입력해주세요.", "EMPTY_QUERY", "/api/query")
+            );
         }
+
+        queryMetrics.recordQuery();
+        long startTime = System.currentTimeMillis();
+
         try {
+
             // 1. NQL → IR
+            long parseStart = System.currentTimeMillis();
             NQLExpression expr = nqlQueryParser.parseToExpression(request.nql());
+            queryMetrics.recordParseTime(System.currentTimeMillis() - parseStart);
 
             // 2. IR → ES bool query
+            long buildStart = System.currentTimeMillis();
             var boolQuery = nqlQueryParser.buildQuery(expr);
+            queryMetrics.recordBuildQueryTime(System.currentTimeMillis() - buildStart);
 
             // 3. keyword() 표현식 추출 → 임베딩 (실패 시 null → BM25 폴백)
+            long embeddingStart = System.currentTimeMillis();
             List<NQLExpression.KeywordExpr> keywords = keywordExtractor.extract(expr);
             float[] vector = null;
             if (!keywords.isEmpty()) {
@@ -56,19 +73,40 @@ public class QueryController {
                         .map(NQLExpression.KeywordExpr::text)
                         .collect(Collectors.joining(" "));
                 vector = embeddingClient.embed(keywordText);
+                if (vector == null) {
+                    // 임베딩 실패 - BM25 단독 검색으로 진행
+                }
             }
+            queryMetrics.recordEmbeddingTime(System.currentTimeMillis() - embeddingStart);
 
             // 4. RRF retriever 구성 (vector == null 이면 BM25 단독)
             JsonNode retriever = rrfScorer.buildRetriever(boolQuery, keywords, vector);
 
             // 5. ES 검색
+            long searchStart = System.currentTimeMillis();
             NewsSearchResponse result = newsSearchService.searchWithRrf(retriever, request.page() * 20);
+            queryMetrics.recordSearchTime(System.currentTimeMillis() - searchStart);
+            queryMetrics.recordQueryTime(startTime);
             return ResponseEntity.ok(result);
 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            queryMetrics.recordError();
+            queryMetrics.recordQueryTime(startTime);
+            return ResponseEntity.badRequest().body(
+                new ErrorResponse("NQL 문법 오류: " + e.getMessage(), "NQL_PARSE_ERROR", "/api/query")
+            );
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body("ES 검색 오류: " + e.getMessage());
+            queryMetrics.recordError();
+            queryMetrics.recordQueryTime(startTime);
+            return ResponseEntity.internalServerError().body(
+                new ErrorResponse("Elasticsearch 연결 오류. 잠시 후 다시 시도해주세요.", "ES_CONNECTION_ERROR", "/api/query")
+            );
+        } catch (Exception e) {
+            queryMetrics.recordError();
+            queryMetrics.recordQueryTime(startTime);
+            return ResponseEntity.internalServerError().body(
+                new ErrorResponse("예상치 못한 오류가 발생했습니다: " + e.getMessage(), "INTERNAL_SERVER_ERROR", "/api/query")
+            );
         }
     }
 }

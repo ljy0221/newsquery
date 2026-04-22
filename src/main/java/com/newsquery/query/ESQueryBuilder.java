@@ -28,6 +28,8 @@ public class ESQueryBuilder {
             return buildCompare(cmp);
         } else if (expr instanceof InExpr in) {
             return buildIn(in);
+        } else if (expr instanceof BetweenExpr between) {
+            return buildBetween(between);
         } else if (expr instanceof MatchAllExpr) {
             return buildMatchAll();
         }
@@ -59,6 +61,11 @@ public class ESQueryBuilder {
             mustNot.add(term);
             return root;
         }
+        if (cmp.op().equals("CONTAINS") || cmp.op().equals("LIKE")) {
+            ObjectNode root = mapper.createObjectNode();
+            root.putObject("wildcard").put(cmp.field(), "*" + cmp.value() + "*");
+            return root;
+        }
         String rangeOp = RANGE_OPS.get(cmp.op());
         if (rangeOp == null) {
             throw new IllegalArgumentException("지원하지 않는 비교 연산자: " + cmp.op());
@@ -77,6 +84,19 @@ public class ESQueryBuilder {
         ObjectNode root = mapper.createObjectNode();
         ArrayNode values = root.putObject("terms").putArray(in.field());
         in.values().forEach(values::add);
+        return root;
+    }
+
+    private ObjectNode buildBetween(BetweenExpr between) {
+        ObjectNode root = mapper.createObjectNode();
+        ObjectNode rangeField = root.putObject("range").putObject(between.field());
+        if (between.field().equals("score")) {
+            rangeField.put("gte", Double.parseDouble(between.start()));
+            rangeField.put("lte", Double.parseDouble(between.end()));
+        } else {
+            rangeField.put("gte", between.start());
+            rangeField.put("lte", between.end());
+        }
         return root;
     }
 

@@ -9,6 +9,7 @@ public sealed interface NQLExpression permits
         NQLExpression.KeywordExpr,
         NQLExpression.CompareExpr,
         NQLExpression.InExpr,
+        NQLExpression.BetweenExpr,
         NQLExpression.MatchAllExpr {
 
     record AndExpr(NQLExpression left, NQLExpression right) implements NQLExpression {}
@@ -17,5 +18,6 @@ public sealed interface NQLExpression permits
     record KeywordExpr(String text, Double boost) implements NQLExpression {}
     record CompareExpr(String field, String op, String value) implements NQLExpression {}
     record InExpr(String field, List<String> values) implements NQLExpression {}
+    record BetweenExpr(String field, String start, String end) implements NQLExpression {}
     record MatchAllExpr() implements NQLExpression {}
 }

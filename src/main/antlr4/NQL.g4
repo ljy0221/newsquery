@@ -17,11 +17,12 @@ keywordExpr : KEYWORD '(' STRING ')' ('*' NUMBER)? ;
 
 fieldExpr   : field compOp value
             | field IN '[' valueList ']'
+            | field BETWEEN value AND value
             ;
 
 field       : SENTIMENT | SOURCE | CATEGORY | COUNTRY | PUBLISHED_AT | SCORE ;
 
-compOp      : EQ | NEQ | GTE | LTE | GT | LT ;
+compOp      : EQ | NEQ | GTE | LTE | GT | LT | CONTAINS | LIKE ;
 
 value       : STRING | NUMBER ;
 
@@ -33,6 +34,9 @@ KEYWORD      : 'keyword' ;
 AND          : 'AND' ;
 OR           : 'OR' ;
 IN           : 'IN' ;
+BETWEEN      : 'BETWEEN' ;
+CONTAINS     : 'CONTAINS' ;
+LIKE         : 'LIKE' ;
 
 SENTIMENT    : 'sentiment' ;
 SOURCE       : 'source' ;

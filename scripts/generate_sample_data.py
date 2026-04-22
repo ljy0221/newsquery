@@ -98,23 +98,35 @@ def bulk_insert_to_elasticsearch(docs, index_name="news"):
 
         # 10,000개씩 나누어 적재 (메모리 효율)
         batch_size = 10000
+        total_success = 0
         for batch_idx in range(0, len(actions), batch_size):
             batch = actions[batch_idx:batch_idx + batch_size]
-            result = es.bulk(operations=batch)
-            errors = [item for item in result["items"] if "error" in item.get("index", {})]
+            try:
+                result = es.bulk(operations=batch)
+                errors = [item for item in result["items"] if "error" in item.get("index", {})]
+                success_count = len(batch)//2 - len(errors)
+                total_success += success_count
 
-            if errors:
-                print(f"⚠️  배치 {batch_idx//2}: {len(errors)}개 오류")
-            else:
-                print(f"✅ 배치 {batch_idx//2}: {len(batch)//2}개 완료")
+                if errors:
+                    print(f"⚠️  배치 {batch_idx//2}: {success_count}개 성공, {len(errors)}개 오류")
+                    for err in errors[:3]:  # 처음 3개 오류만 표시
+                        print(f"    {err}")
+                else:
+                    print(f"✅ 배치 {batch_idx//2}: {len(batch)//2}개 완료")
+            except Exception as batch_err:
+                print(f"❌ 배치 오류: {batch_err}")
 
         # 최종 확인
+        import time
+        time.sleep(1)  # ES 인덱싱 완료 대기
         count = es.count(index=index_name)["count"]
-        print(f"\n🎉 적재 완료! 총 {count}개 문서")
+        print(f"\n🎉 적재 완료! 총 {count}개 문서 (예상: {total_success}개)")
         return count
 
     except Exception as e:
         print(f"❌ 오류: {e}")
+        import traceback
+        traceback.print_exc()
         return 0
 
 def show_statistics(index_name="news"):

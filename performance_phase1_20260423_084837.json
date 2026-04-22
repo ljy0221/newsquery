@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-04-23T08:48:38.173353",
+  "results": {
+    "Simple keyword": {
+      "query": "keyword(\"AI\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 37.13107109069824,
+      "min_ms": 20.585060119628906,
+      "max_ms": 47.225236892700195,
+      "stddev_ms": 14.444531290053524,
+      "p95_ms": 47.225236892700195
+    },
+    "Keyword + sentiment": {
+      "query": "keyword(\"technology\") AND sentiment == \"positive\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 33.97909800211588,
+      "min_ms": 17.91834831237793,
+      "max_ms": 45.69578170776367,
+      "stddev_ms": 14.389219348678015,
+      "p95_ms": 45.69578170776367
+    },
+    "OR query": {
+      "query": "keyword(\"AI\") OR keyword(\"machine learning\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 29.69702084859212,
+      "min_ms": 21.686792373657227,
+      "max_ms": 34.749746322631836,
+      "stddev_ms": 7.015718742116579,
+      "p95_ms": 34.749746322631836
+    },
+    "Keyword + source": {
+      "query": "keyword(\"blockchain\") AND source IN [\"Reuters\", \"Bloomberg\"]",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 30.603885650634766,
+      "min_ms": 22.529125213623047,
+      "max_ms": 40.45248031616211,
+      "stddev_ms": 9.092388599021628,
+      "p95_ms": 40.45248031616211
+    },
+    "Complex query": {
+      "query": "(keyword(\"AI\") * 2.0 OR keyword(\"tech\")) AND sentiment != \"negative\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 31.180620193481445,
+      "min_ms": 19.081830978393555,
+      "max_ms": 41.42308235168457,
+      "stddev_ms": 11.285714015415076,
+      "p95_ms": 41.42308235168457
+    },
+    "Match all": {
+      "query": "*",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 23.79322052001953,
+      "min_ms": 13.164281845092773,
+      "max_ms": 30.17258644104004,
+      "stddev_ms": 9.26632385308149,
+      "p95_ms": 30.17258644104004
+    }
+  }
+}

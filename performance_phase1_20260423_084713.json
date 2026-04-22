@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-04-23T08:47:14.562673",
+  "results": {
+    "Simple keyword": {
+      "query": "keyword(\"AI\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 101.17459297180176,
+      "min_ms": 41.78500175476074,
+      "max_ms": 210.85691452026367,
+      "stddev_ms": 95.09651394603394,
+      "p95_ms": 210.85691452026367
+    },
+    "Keyword + sentiment": {
+      "query": "keyword(\"technology\") AND sentiment == \"positive\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 41.149298350016274,
+      "min_ms": 22.60136604309082,
+      "max_ms": 64.39971923828125,
+      "stddev_ms": 21.292266943674477,
+      "p95_ms": 64.39971923828125
+    },
+    "OR query": {
+      "query": "keyword(\"AI\") OR keyword(\"machine learning\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 36.653995513916016,
+      "min_ms": 19.6988582611084,
+      "max_ms": 56.60510063171387,
+      "stddev_ms": 18.634633054222164,
+      "p95_ms": 56.60510063171387
+    },
+    "Keyword + source": {
+      "query": "keyword(\"blockchain\") AND source IN [\"Reuters\", \"Bloomberg\"]",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 34.88659858703613,
+      "min_ms": 31.64505958557129,
+      "max_ms": 38.75231742858887,
+      "stddev_ms": 3.59450676259801,
+      "p95_ms": 38.75231742858887
+    },
+    "Complex query": {
+      "query": "(keyword(\"AI\") * 2.0 OR keyword(\"tech\")) AND sentiment != \"negative\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 24.160146713256836,
+      "min_ms": 19.96612548828125,
+      "max_ms": 29.946327209472656,
+      "stddev_ms": 5.177097155517284,
+      "p95_ms": 29.946327209472656
+    },
+    "Match all": {
+      "query": "*",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 19.0273920694987,
+      "min_ms": 14.075040817260742,
+      "max_ms": 28.67269515991211,
+      "stddev_ms": 8.354084377923044,
+      "p95_ms": 28.67269515991211
+    }
+  }
+}

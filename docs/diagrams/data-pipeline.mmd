@@ -1,0 +1,33 @@
+graph LR
+    A["GDELT 2.0<br/>15분 주기"]
+    B["RSS 피드<br/>5분 주기"]
+
+    C["gdelt_producer.py"]
+    D["rss_producer.py"]
+
+    E["Kafka Topic<br/>news-raw<br/>3 Partitions"]
+
+    F["news_worker.py<br/>Kafka Consumer<br/>Embedding + ES bulk"]
+    G["spark_archive.py<br/>Spark Streaming<br/>Iceberg writer"]
+
+    H["Elasticsearch<br/>Index: news<br/>검색 + 분석"]
+    I["Iceberg<br/>Data Lake<br/>장기 아카이빙"]
+
+    style A fill:#dbeafe
+    style B fill:#fecaca
+    style C fill:#fbbf24
+    style D fill:#fbbf24
+    style E fill:#86efac
+    style F fill:#a5f3fc
+    style G fill:#a5f3fc
+    style H fill:#d8b4fe
+    style I fill:#99f6e4
+
+    A --> C
+    B --> D
+    C --> E
+    D --> E
+    E --> F
+    E --> G
+    F --> H
+    G --> I

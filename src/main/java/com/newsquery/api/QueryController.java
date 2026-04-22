@@ -6,6 +6,7 @@ import com.newsquery.monitoring.QueryMetrics;
 import com.newsquery.nql.KeywordExtractor;
 import com.newsquery.nql.NQLExpression;
 import com.newsquery.nql.NQLQueryParser;
+import com.newsquery.query.AggregationBuilder;
 import com.newsquery.scoring.RRFScorer;
 import com.newsquery.search.NewsSearchService;
 import org.springframework.http.ResponseEntity;
@@ -25,19 +26,22 @@ public class QueryController {
     private final RRFScorer rrfScorer;
     private final NewsSearchService newsSearchService;
     private final QueryMetrics queryMetrics;
+    private final AggregationBuilder aggregationBuilder;
 
     public QueryController(NQLQueryParser nqlQueryParser,
                            KeywordExtractor keywordExtractor,
                            EmbeddingClient embeddingClient,
                            RRFScorer rrfScorer,
                            NewsSearchService newsSearchService,
-                           QueryMetrics queryMetrics) {
+                           QueryMetrics queryMetrics,
+                           AggregationBuilder aggregationBuilder) {
         this.nqlQueryParser    = nqlQueryParser;
         this.keywordExtractor  = keywordExtractor;
         this.embeddingClient   = embeddingClient;
         this.rrfScorer         = rrfScorer;
         this.newsSearchService = newsSearchService;
         this.queryMetrics      = queryMetrics;
+        this.aggregationBuilder = aggregationBuilder;
     }
 
     @PostMapping("/query")
@@ -59,14 +63,27 @@ public class QueryController {
             NQLExpression expr = nqlQueryParser.parseToExpression(request.nql());
             queryMetrics.recordParseTime(System.currentTimeMillis() - parseStart);
 
+            // Aggregation 여부 확인
+            boolean hasAggregation = expr instanceof NQLExpression.AggregationExpr;
+            NQLExpression baseExpr = expr;
+            String groupByField = null;
+            Integer limit = null;
+
+            if (hasAggregation) {
+                var agg = (NQLExpression.AggregationExpr) expr;
+                baseExpr = agg.expr();
+                groupByField = agg.groupByField();
+                limit = agg.limit().orElse(10);
+            }
+
             // 2. IR → ES bool query
             long buildStart = System.currentTimeMillis();
-            var boolQuery = nqlQueryParser.buildQuery(expr);
+            var boolQuery = nqlQueryParser.buildQuery(baseExpr);
             queryMetrics.recordBuildQueryTime(System.currentTimeMillis() - buildStart);
 
             // 3. keyword() 표현식 추출 → 임베딩 (실패 시 null → BM25 폴백)
             long embeddingStart = System.currentTimeMillis();
-            List<NQLExpression.KeywordExpr> keywords = keywordExtractor.extract(expr);
+            List<NQLExpression.KeywordExpr> keywords = keywordExtractor.extract(baseExpr);
             float[] vector = null;
             if (!keywords.isEmpty()) {
                 String keywordText = keywords.stream()
@@ -82,7 +99,12 @@ public class QueryController {
             // 4. RRF retriever 구성 (vector == null 이면 BM25 단독)
             JsonNode retriever = rrfScorer.buildRetriever(boolQuery, keywords, vector);
 
-            // 5. ES 검색
+            // 5. 집계가 있으면 aggregation 추가
+            if (hasAggregation && groupByField != null) {
+                retriever = aggregationBuilder.buildQueryWithAggregation(retriever, groupByField, limit);
+            }
+
+            // 6. ES 검색
             long searchStart = System.currentTimeMillis();
             NewsSearchResponse result = newsSearchService.searchWithRrf(retriever, request.page() * 20);
             queryMetrics.recordSearchTime(System.currentTimeMillis() - searchStart);

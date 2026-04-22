@@ -1,0 +1,46 @@
+graph TD
+    A["NQL 쿼리 입력<br/>keyword('AI') AND sentiment='positive'"]
+
+    B["ANTLR4 Lexer/Parser<br/>NQL.g4 문법"]
+    C["Abstract Syntax Tree<br/>AST 생성"]
+    D["NQLVisitor<br/>IR 변환"]
+    E["NQLExpression<br/>sealed interface"]
+
+    F["ESQueryBuilder<br/>Query DSL 생성"]
+    G["Elasticsearch Query DSL<br/>JSON"]
+
+    H["KeywordExtractor<br/>벡터 키워드 추출"]
+    I["EmbeddingClient<br/>FastAPI 호출<br/>384-dim vector"]
+
+    J["RRFScorer<br/>BM25 + kNN 통합"]
+    K["Elasticsearch<br/>bool query + kNN"]
+
+    L["NewsSearchResponse<br/>랭킹된 뉴스 목록"]
+
+    style A fill:#dbeafe
+    style B fill:#fecaca
+    style C fill:#fecaca
+    style D fill:#fbbf24
+    style E fill:#fbbf24
+    style F fill:#86efac
+    style G fill:#86efac
+    style H fill:#a5f3fc
+    style I fill:#d8b4fe
+    style J fill:#fca5a5
+    style K fill:#99f6e4
+    style L fill:#bfdbfe
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> J
+
+    E --> H
+    H --> I
+    I --> J
+
+    J --> K
+    K --> L

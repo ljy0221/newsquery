@@ -66,7 +66,7 @@ NewsSearchResponse (랭킹된 뉴스 목록)
 ```
 
 **상세 플로우 및 AST 다이어그램:** [`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md#2-nql-쿼리-처리-플로우)  
-**Excalidraw 다이어그램:** [`docs/diagrams/architecture.excalidraw.json`](docs/diagrams/architecture.excalidraw.json)
+**Mermaid 다이어그램:** [`docs/diagrams/architecture.mmd`](docs/diagrams/architecture.mmd) (GitHub에서 렌더링됨)
 
 ---
 
@@ -107,7 +107,7 @@ NewsSearchResponse (랭킹된 뉴스 목록)
 - [`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md#4-kafka-데이터-흐름) (Kafka 플로우)
 - [`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md#5-데이터-저장소-비교) (ES vs Iceberg)
 
-**Excalidraw 다이어그램:** [`docs/diagrams/data-pipeline.excalidraw.json`](docs/diagrams/data-pipeline.excalidraw.json)
+**Mermaid 다이어그램:** [`docs/diagrams/data-pipeline.mmd`](docs/diagrams/data-pipeline.mmd) (GitHub에서 렌더링됨)
 
 ---
 
@@ -125,7 +125,7 @@ NewsSearchResponse (랭킹된 뉴스 목록)
 **상세 예시 및 계산 과정:**  
 [`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md#3-rrf-reciprocal-rank-fusion-스코어링) 참고
 
-**Excalidraw 다이어그램:** [`docs/diagrams/rrf-scoring.excalidraw.json`](docs/diagrams/rrf-scoring.excalidraw.json)
+**Mermaid 다이어그램:** [`docs/diagrams/rrf-scoring.mmd`](docs/diagrams/rrf-scoring.mmd) (GitHub에서 렌더링됨)
 
 ---
 

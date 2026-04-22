@@ -61,4 +61,30 @@ public class AggregationBuilder {
 
         return root;
     }
+
+    /**
+     * JsonNode 쿼리에 집계를 추가 (RRF retriever용)
+     */
+    public ObjectNode buildQueryWithAggregation(
+        Object retriever,
+        String groupByField,
+        Integer limit
+    ) {
+        ObjectNode root = mapper.createObjectNode();
+
+        if (retriever instanceof ObjectNode objRetriever) {
+            root.set("retriever", objRetriever);
+        } else {
+            root.set("retriever", mapper.valueToTree(retriever));
+        }
+
+        ObjectNode aggsNode = root.putObject("aggs");
+        ObjectNode groupAgg = aggsNode.putObject("group_by_" + groupByField);
+
+        ObjectNode termsAgg = groupAgg.putObject("terms");
+        termsAgg.put("field", groupByField);
+        termsAgg.put("size", limit != null ? limit : 10);
+
+        return root;
+    }
 }

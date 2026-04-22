@@ -1,0 +1,34 @@
+graph TD
+    A["Elasticsearch Query<br/>Bool Query"]
+    B["kNN Vector Search<br/>Dense Vector"]
+
+    C["BM25 검색<br/>키워드 매칭"]
+    D["Vector 검색<br/>의미적 유사도"]
+
+    E["BM25 Ranking<br/>score_1, score_2, ..."]
+    F["Vector Ranking<br/>similarity_1, similarity_2, ..."]
+
+    G["RRF 통합<br/>Score = 1/60+rank_bm25<br/>+ 1/60+rank_vector"]
+
+    H["최종 랭킹<br/>상위 결과부터 정렬"]
+
+    I["NewsSearchResponse<br/>JSON 응답"]
+
+    style A fill:#dbeafe
+    style B fill:#fecaca
+    style C fill:#fbbf24
+    style D fill:#86efac
+    style E fill:#fbbf24
+    style F fill:#86efac
+    style G fill:#d8b4fe
+    style H fill:#99f6e4
+    style I fill:#bfdbfe
+
+    A --> C
+    B --> D
+    C --> E
+    D --> F
+    E --> G
+    F --> G
+    G --> H
+    H --> I

@@ -32,6 +32,8 @@ public class ESQueryBuilder {
             return buildBetween(between);
         } else if (expr instanceof MatchAllExpr) {
             return buildMatchAll();
+        } else if (expr instanceof AggregationExpr agg) {
+            return build(agg.expr());
         }
         throw new IllegalArgumentException("Unknown expression type: " + expr.getClass());
     }

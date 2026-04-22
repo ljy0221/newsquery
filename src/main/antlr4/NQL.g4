@@ -2,7 +2,7 @@ grammar NQL;
 
 // === Parser Rules ===
 
-query       : expr EOF ;
+query       : expr (groupByClause)? (limitClause)? EOF ;
 
 expr        : expr AND expr          # andExpr
             | expr OR expr           # orExpr
@@ -13,7 +13,17 @@ expr        : expr AND expr          # andExpr
             | STAR                   # matchAllExpr
             ;
 
-keywordExpr : KEYWORD '(' STRING ')' ('*' NUMBER)? ;
+groupByClause : GROUP BY field ;
+
+limitClause : LIMIT NUMBER ;
+
+keywordExpr : KEYWORD '(' STRING ')' ('*' NUMBER)? (boostFunc)? ;
+
+boostFunc   : BOOST boostType '(' boostArg ')' ;
+
+boostType   : RECENCY | TREND | POPULARITY ;
+
+boostArg    : field | field ',' NUMBER ;  // field 또는 field, number
 
 fieldExpr   : field compOp value
             | field IN '[' valueList ']'
@@ -37,6 +47,13 @@ IN           : 'IN' ;
 BETWEEN      : 'BETWEEN' ;
 CONTAINS     : 'CONTAINS' ;
 LIKE         : 'LIKE' ;
+GROUP        : 'GROUP' ;
+BY           : 'BY' ;
+LIMIT        : 'LIMIT' ;
+BOOST        : 'BOOST' ;
+RECENCY      : 'recency' ;
+TREND        : 'trend' ;
+POPULARITY   : 'popularity' ;
 
 SENTIMENT    : 'sentiment' ;
 SOURCE       : 'source' ;

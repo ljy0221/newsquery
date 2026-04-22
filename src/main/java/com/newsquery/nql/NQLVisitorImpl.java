@@ -1,13 +1,25 @@
 package com.newsquery.nql;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class NQLVisitorImpl extends NQLBaseVisitor<NQLExpression> {
 
     @Override
     public NQLExpression visitQuery(NQLParser.QueryContext ctx) {
-        return visit(ctx.expr());
+        NQLExpression expr = visit(ctx.expr());
+
+        if (ctx.groupByClause() != null) {
+            String groupByField = ctx.groupByClause().field().getText();
+            Optional<Integer> limit = Optional.empty();
+            if (ctx.limitClause() != null) {
+                limit = Optional.of(Integer.parseInt(ctx.limitClause().NUMBER().getText()));
+            }
+            return new NQLExpression.AggregationExpr(expr, groupByField, limit);
+        }
+
+        return expr;
     }
 
     @Override

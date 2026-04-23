@@ -799,6 +799,44 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 
 ---
 
+## 🎓 기술 심화 학습 가이드
+
+**기술 면접 또는 깊이 있는 학습을 원하시나요?**
+
+이 프로젝트의 전체 기술 여정을 4개 시리즈로 체계적으로 정리했습니다 (~4시간).
+
+### 📚 시리즈 구성
+
+| 시리즈 | 제목 | 난이도 | 시간 | 핵심 내용 |
+|--------|------|--------|------|---------|
+| **Series 01** | [아키텍처 설계](docs/TECH_INTERVIEW_GUIDE_SERIES_01_ARCHITECTURE.md) | ⭐⭐⭐ | 45분 | ANTLR4, sealed interface, RRF 하이브리드 검색 |
+| **Series 02** | [Phase 1: 에러 처리 & 모니터링](docs/TECH_INTERVIEW_GUIDE_SERIES_02_PHASE1_ERROR_HANDLING.md) | ⭐⭐ | 40분 | @ExceptionHandler, Prometheus, Grafana |
+| **Series 03** | [Phase 2: 고급 연산자](docs/TECH_INTERVIEW_GUIDE_SERIES_03_PHASE2_OPERATORS.md) | ⭐⭐⭐ | 50분 | BETWEEN, CONTAINS, LIKE 구현 및 성능 |
+| **Series 04** | [Phase 4-5: 성능 최적화 & 이벤트](docs/TECH_INTERVIEW_GUIDE_SERIES_04_PHASE4_5_OPTIMIZATION.md) | ⭐⭐⭐⭐ | 60분 | 2-계층 캐싱, Cold vs Warm, 이벤트 패턴 |
+
+### 🎯 빠른 시작
+
+```bash
+# 전체 인덱스 보기
+cat docs/TECH_INTERVIEW_GUIDE_INDEX.md
+
+# Series별 학습 (순서대로 권장)
+1️⃣ Series 01: 아키텍처 (전체 개요 이해)
+2️⃣ Series 02: Phase 1 (운영 기초)
+3️⃣ Series 03: Phase 2 (구체적 구현)
+4️⃣ Series 04: Phase 4-5 (최적화 & 확장)
+```
+
+### 💡 각 시리즈의 특징
+
+- **상세한 설계 결정 근거**: "왜 이 기술을 선택했는가?"
+- **코드 예시**: 실제 구현 코드 포함
+- **성능 데이터**: 실측 벤치마크 결과
+- **면접 Q&A**: 예상 질문과 모범 답변 (총 17개)
+- **학습 경로**: 초급/중급/고급별 추천 순서
+
+---
+
 ## 참고 자료
 
 - [ANTLR4 공식 문서](https://www.antlr.org/)

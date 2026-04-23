@@ -1,38 +1,57 @@
 package com.newsquery.service;
 
 import com.newsquery.domain.KeywordSubscription;
+import com.newsquery.repository.KeywordSubscriptionRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class KeywordSubscriptionService {
 
-    private final Map<String, KeywordSubscription> subscriptions = new ConcurrentHashMap<>();
+    private final KeywordSubscriptionRepository repository;
+
+    public KeywordSubscriptionService(KeywordSubscriptionRepository repository) {
+        this.repository = repository;
+    }
 
     public KeywordSubscription subscribe(String userId, String keyword) {
         KeywordSubscription subscription = new KeywordSubscription(userId, keyword);
-        subscriptions.put(subscription.getId(), subscription);
-        return subscription;
+        return repository.save(subscription);
     }
 
-    public boolean unsubscribe(String subscriptionId) {
-        return subscriptions.remove(subscriptionId) != null;
+    public void unsubscribe(String subscriptionId) {
+        repository.deleteById(subscriptionId);
     }
 
+    public void unsubscribeByKeyword(String userId, String keyword) {
+        repository.findByUserIdAndKeyword(userId, keyword).ifPresent(repository::delete);
+    }
+
+    @Transactional(readOnly = true)
     public List<String> getSubscribedKeywords(String userId) {
-        return subscriptions.values().stream()
-            .filter(sub -> sub.getUserId().equals(userId) && sub.isActive())
-            .map(KeywordSubscription::getKeyword)
-            .collect(Collectors.toList());
+        return repository.findByUserIdAndIsActive(userId, true).stream()
+                .map(KeywordSubscription::getKeyword)
+                .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<KeywordSubscription> getSubscriptions(String userId) {
-        return subscriptions.values().stream()
-            .filter(sub -> sub.getUserId().equals(userId) && sub.isActive())
-            .collect(Collectors.toList());
+        return repository.findByUserIdAndIsActive(userId, true);
+    }
+
+    @Transactional(readOnly = true)
+    public List<KeywordSubscription> getAllSubscriptions(String userId) {
+        return repository.findByUserId(userId);
+    }
+
+    public void toggleSubscription(String subscriptionId, boolean isActive) {
+        repository.findById(subscriptionId).ifPresent(sub -> {
+            sub.setActive(isActive);
+            repository.save(sub);
+        });
     }
 }

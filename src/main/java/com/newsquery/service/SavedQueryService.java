@@ -2,104 +2,85 @@ package com.newsquery.service;
 
 import com.newsquery.domain.QueryHistory;
 import com.newsquery.domain.SavedQuery;
+import com.newsquery.repository.QueryHistoryRepository;
+import com.newsquery.repository.SavedQueryRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-/**
- * Phase 5: 저장된 검색 서비스
- * 인메모리 구현 (프로토타입)
- * 프로덕션에서는 PostgreSQL 연동 필요
- */
 @Service
+@Transactional
 public class SavedQueryService {
 
-    // 프로토타입: 인메모리 저장소
-    private final Map<String, SavedQuery> savedQueries = new ConcurrentHashMap<>();
-    private final Map<String, List<QueryHistory>> queryHistories = new ConcurrentHashMap<>();
+    private final SavedQueryRepository savedQueryRepository;
+    private final QueryHistoryRepository queryHistoryRepository;
 
-    /**
-     * 새 검색 저장
-     */
+    public SavedQueryService(SavedQueryRepository savedQueryRepository, QueryHistoryRepository queryHistoryRepository) {
+        this.savedQueryRepository = savedQueryRepository;
+        this.queryHistoryRepository = queryHistoryRepository;
+    }
+
     public SavedQuery save(String userId, String nql, String name, String description) {
         SavedQuery query = new SavedQuery(userId, nql, name, description);
-        savedQueries.put(query.getId(), query);
-        return query;
+        return savedQueryRepository.save(query);
     }
 
-    /**
-     * 저장된 검색 조회
-     */
+    @Transactional(readOnly = true)
     public Optional<SavedQuery> findById(String id) {
-        return Optional.ofNullable(savedQueries.get(id));
+        return savedQueryRepository.findById(id);
     }
 
-    /**
-     * 사용자의 모든 저장된 검색
-     */
+    @Transactional(readOnly = true)
     public List<SavedQuery> findByUserId(String userId) {
-        return savedQueries.values().stream()
-                .filter(q -> q.getUserId().equals(userId))
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
-                .collect(Collectors.toList());
+        return savedQueryRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
-    /**
-     * 즐겨찾기 검색만
-     */
+    @Transactional(readOnly = true)
     public List<SavedQuery> findFavoritesByUserId(String userId) {
-        return findByUserId(userId).stream()
-                .filter(SavedQuery::isFavorite)
-                .collect(Collectors.toList());
+        return savedQueryRepository.findFavoritesByUserId(userId);
     }
 
-    /**
-     * 저장된 검색 삭제
-     */
-    public boolean delete(String id) {
-        return savedQueries.remove(id) != null;
+    public void delete(String id) {
+        savedQueryRepository.deleteById(id);
     }
 
-    /**
-     * 검색 히스토리 기록
-     */
-    public void recordHistory(String userId, String nql, double responseTimeMs, int totalHits) {
-        QueryHistory history = new QueryHistory(userId, nql, responseTimeMs, totalHits);
-        queryHistories
-                .computeIfAbsent(userId, k -> Collections.synchronizedList(new ArrayList<>()))
-                .add(history);
+    @Transactional(readOnly = true)
+    public SavedQuery findById(String userId, String queryId) {
+        return savedQueryRepository.findById(queryId)
+                .filter(q -> q.getUserId().equals(userId))
+                .orElse(null);
     }
 
-    /**
-     * 검색 히스토리 기록 (오류)
-     */
+    public void updateFavorite(String id, boolean isFavorite) {
+        savedQueryRepository.findById(id).ifPresent(query -> {
+            query.setFavorite(isFavorite);
+            savedQueryRepository.save(query);
+        });
+    }
+
+    public void recordHistory(String userId, String nql, double responseTimeMs, long totalHits) {
+        QueryHistory history = new QueryHistory(userId, nql, responseTimeMs, totalHits, true, null);
+        queryHistoryRepository.save(history);
+    }
+
     public void recordHistoryError(String userId, String nql, String errorMessage) {
-        QueryHistory history = new QueryHistory(userId, nql, errorMessage);
-        queryHistories
-                .computeIfAbsent(userId, k -> Collections.synchronizedList(new ArrayList<>()))
-                .add(history);
+        QueryHistory history = new QueryHistory(userId, nql, 0, 0, false, errorMessage);
+        queryHistoryRepository.save(history);
     }
 
-    /**
-     * 사용자의 검색 히스토리 조회 (최근 순)
-     */
+    @Transactional(readOnly = true)
     public List<QueryHistory> getHistory(String userId, int limit) {
-        return queryHistories.getOrDefault(userId, Collections.emptyList())
-                .stream()
-                .sorted((a, b) -> b.getExecutedAt().compareTo(a.getExecutedAt()))
-                .limit(limit)
-                .collect(Collectors.toList());
+        List<QueryHistory> histories = queryHistoryRepository.findByUserIdOrderByExecutedAtDesc(userId);
+        return histories.stream().limit(limit).collect(Collectors.toList());
     }
 
-    /**
-     * 인기 검색어 조회
-     */
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> getTrendingQueries(String userId, int limit) {
-        return queryHistories.getOrDefault(userId, Collections.emptyList())
-                .stream()
+        List<QueryHistory> histories = queryHistoryRepository.findByUserIdOrderByExecutedAtDesc(userId);
+        return histories.stream()
                 .filter(QueryHistory::isSuccess)
                 .collect(Collectors.groupingBy(
                         QueryHistory::getNql,
@@ -117,11 +98,9 @@ public class SavedQueryService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 검색 통계 조회
-     */
+    @Transactional(readOnly = true)
     public Map<String, Object> getQueryStats(String userId, String nql) {
-        List<QueryHistory> histories = queryHistories.getOrDefault(userId, Collections.emptyList())
+        List<QueryHistory> histories = queryHistoryRepository.findByUserIdOrderByExecutedAtDesc(userId)
                 .stream()
                 .filter(h -> h.getNql().equals(nql) && h.isSuccess())
                 .collect(Collectors.toList());
@@ -148,17 +127,13 @@ public class SavedQueryService {
         return stats;
     }
 
-    /**
-     * 전체 저장된 검색 개수
-     */
-    public int getTotalSavedQueryCount() {
-        return savedQueries.size();
+    @Transactional(readOnly = true)
+    public long getTotalSavedQueryCount() {
+        return savedQueryRepository.count();
     }
 
-    /**
-     * 전체 히스토리 개수
-     */
-    public int getTotalHistoryCount() {
-        return queryHistories.values().stream().mapToInt(List::size).sum();
+    @Transactional(readOnly = true)
+    public long getTotalHistoryCount() {
+        return queryHistoryRepository.count();
     }
 }

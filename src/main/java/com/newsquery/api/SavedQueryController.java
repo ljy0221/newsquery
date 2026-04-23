@@ -81,7 +81,8 @@ public class SavedQueryController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable String id) {
-        if (savedQueryService.delete(id)) {
+        if (savedQueryService.findById(id).isPresent()) {
+            savedQueryService.delete(id);
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();

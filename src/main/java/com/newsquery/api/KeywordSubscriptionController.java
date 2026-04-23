@@ -67,11 +67,12 @@ public class KeywordSubscriptionController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> unsubscribe(@PathVariable String id) {
-        boolean deleted = subscriptionService.unsubscribe(id);
-        if (deleted) {
+        try {
+            subscriptionService.unsubscribe(id);
             return ResponseEntity.ok(Map.of("status", "success", "subscriptionId", id));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
     }
 
     /**

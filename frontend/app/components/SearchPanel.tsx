@@ -44,8 +44,10 @@ const SYNTAX_ROWS = [
 const PAGE_SIZE = 20;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
-export default function SearchPanel() {
-  const [nql, setNql] = useState('keyword("HBM") * 1.5 AND sentiment != "negative"');
+export default function SearchPanel({ initialNql }: { initialNql?: string }) {
+  const [nql, setNql] = useState(
+    initialNql ?? 'keyword("HBM") * 1.5 AND sentiment != "negative"'
+  );
   const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

@@ -1,0 +1,197 @@
+/* NotificationCenter 스타일 */
+
+.notificationCenter {
+    max-width: 500px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    background: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 헤더 */
+.header {
+    padding: 16px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #eee;
+}
+
+.titleRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: #f44336;
+    color: white;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.collapseBtn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.collapseBtn:hover {
+    color: #333;
+}
+
+/* 상태 표시기 */
+.statusIndicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.statusDot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.statusText {
+    color: #666;
+}
+
+.status-connected .statusDot {
+    background: #4caf50;
+    animation: pulse 2s infinite;
+}
+
+.status-connecting .statusDot {
+    background: #ff9800;
+    animation: blink 1s infinite;
+}
+
+.status-disconnected .statusDot {
+    background: #f44336;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes blink {
+    0%, 50%, 100% {
+        opacity: 1;
+    }
+    25%, 75% {
+        opacity: 0;
+    }
+}
+
+/* 에러 배너 */
+.errorBanner {
+    padding: 12px 16px;
+    background: #ffebee;
+    color: #c62828;
+    border-bottom: 1px solid #f44336;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.retryBtn {
+    padding: 4px 8px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.retryBtn:hover {
+    background-color: #d32f2f;
+}
+
+/* 알림 목록 */
+.notificationsList {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.emptyState {
+    padding: 32px 16px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    margin: 0;
+}
+
+.clearBtn {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 12px;
+    color: #666;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #eee;
+}
+
+.clearBtn:hover {
+    background-color: #eeeeee;
+}
+
+.itemsContainer {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #eee;
+}
+
+/* 스크롤바 스타일 */
+.notificationsList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notificationsList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.notificationsList::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.notificationsList::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

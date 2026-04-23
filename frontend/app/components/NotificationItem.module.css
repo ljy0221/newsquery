@@ -1,0 +1,139 @@
+/* NotificationItem 스타일 */
+
+.notificationItem {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s;
+    border-left: 4px solid #ccc;
+    position: relative;
+}
+
+.notificationItem:last-child {
+    border-bottom: none;
+}
+
+.notificationItem:hover {
+    background: #fafafa;
+}
+
+/* 타입별 스타일 */
+.notification-performance-alert {
+    border-left-color: #ff9800;
+}
+
+.notification-error-alert {
+    border-left-color: #f44336;
+}
+
+.notification-keyword-alert {
+    border-left-color: #2196f3;
+}
+
+/* 헤더 */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.icon {
+    font-size: 16px;
+    min-width: 20px;
+}
+
+.type {
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.time {
+    color: #999;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* 본문 */
+.body {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.message {
+    margin: 0 0 8px 0;
+    word-break: break-word;
+}
+
+/* 상세 정보 */
+.details {
+    margin: 8px 0 0 0;
+    cursor: pointer;
+}
+
+.details summary {
+    padding: 4px 0;
+    color: #2196f3;
+    font-size: 12px;
+    font-weight: 500;
+    user-select: none;
+    transition: color 0.2s;
+}
+
+.details summary:hover {
+    color: #1976d2;
+}
+
+.detailsContent {
+    margin: 8px 0 0 0;
+    padding: 8px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    max-height: 150px;
+    overflow: auto;
+    color: #333;
+}
+
+/* 읽음 배지 */
+.readBadge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 2px 6px;
+    background: #e0e0e0;
+    color: #666;
+    font-size: 11px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+/* 반응형 */
+@media (max-width: 600px) {
+    .notificationItem {
+        padding: 10px 12px;
+    }
+
+    .header {
+        font-size: 12px;
+        margin-bottom: 6px;
+    }
+
+    .icon {
+        font-size: 14px;
+    }
+
+    .body {
+        font-size: 13px;
+    }
+
+    .message {
+        margin-bottom: 6px;
+    }
+}

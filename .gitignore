@@ -45,3 +45,10 @@ hadoop-winutils/
 # Node.js
 node_modules/
 package-lock.json
+
+# Generated/temporary folders
+bin/
+domain/
+measurements/
+hadoop-winutils/
+iceberg-warehouse/

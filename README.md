@@ -35,6 +35,8 @@ keyword("HBM") > 5 AND sentiment != "negative" AND source IN ["Reuters", "Bloomb
 | **백엔드** | Spring Boot 3.x |
 | **프론트엔드** | Next.js 14, React |
 
+**📁 [프로젝트 폴더 구조](STRUCTURE.md) →** 상세한 디렉토리 및 파일 설명
+
 ---
 
 ## 📸 스크린샷

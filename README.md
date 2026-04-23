@@ -37,6 +37,30 @@ keyword("HBM") > 5 AND sentiment != "negative" AND source IN ["Reuters", "Bloomb
 
 ---
 
+## 📸 스크린샷
+
+### 검색 인터페이스
+
+NQL 쿼리를 직관적으로 입력하고 실행합니다.
+
+**검색 페이지 (메인)**
+![검색 메인](frontend/public/screenshots/search-main.png)
+
+**검색 결과**
+![검색 결과](frontend/public/screenshots/search-result.png)
+
+### 대시보드
+
+검색 통계, 히스토리, 인기 검색어를 한눈에 확인합니다.
+
+**대시보드 - 통계 카드 + 히스토리 + 차트**
+![대시보드 통계](frontend/public/screenshots/dashboard-stats.png)
+
+**대시보드 - 히스토리 테이블 + 인기 검색어 차트**
+![대시보드 차트](frontend/public/screenshots/dashboard-chart.png)
+
+---
+
 ## 아키텍처
 
 ### 시스템 전체 구조

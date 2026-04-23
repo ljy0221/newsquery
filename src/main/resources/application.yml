@@ -3,6 +3,21 @@ spring:
     name: newsquery
   elasticsearch:
     uris: "http://localhost:9200"
+  # Phase 4: Redis 캐싱 설정
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 60000ms
+    jedis:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        max-wait: -1ms
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000  # 1시간 기본 TTL
 
 management:
   endpoints:

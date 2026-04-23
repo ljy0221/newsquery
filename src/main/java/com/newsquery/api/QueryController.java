@@ -1,14 +1,19 @@
 package com.newsquery.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.newsquery.cache.QueryCacheService;
 import com.newsquery.embedding.EmbeddingClient;
+import com.newsquery.event.EventPublisher;
+import com.newsquery.event.QueryExecutionEvent;
 import com.newsquery.monitoring.QueryMetrics;
 import com.newsquery.nql.KeywordExtractor;
 import com.newsquery.nql.NQLExpression;
 import com.newsquery.nql.NQLQueryParser;
+import com.newsquery.performance.QueryProfiler;
 import com.newsquery.query.AggregationBuilder;
 import com.newsquery.scoring.RRFScorer;
 import com.newsquery.search.NewsSearchService;
+import com.newsquery.service.SavedQueryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +32,11 @@ public class QueryController {
     private final NewsSearchService newsSearchService;
     private final QueryMetrics queryMetrics;
     private final AggregationBuilder aggregationBuilder;
+    private final QueryCacheService queryCacheService;
+    private final QueryProfiler queryProfiler;
+    private final SavedQueryService savedQueryService;
+    private final EventPublisher eventPublisher;
+    private static final String DEFAULT_USER_ID = "anonymous";  // 프로토타입용
 
     public QueryController(NQLQueryParser nqlQueryParser,
                            KeywordExtractor keywordExtractor,
@@ -34,7 +44,11 @@ public class QueryController {
                            RRFScorer rrfScorer,
                            NewsSearchService newsSearchService,
                            QueryMetrics queryMetrics,
-                           AggregationBuilder aggregationBuilder) {
+                           AggregationBuilder aggregationBuilder,
+                           QueryCacheService queryCacheService,
+                           QueryProfiler queryProfiler,
+                           SavedQueryService savedQueryService,
+                           EventPublisher eventPublisher) {
         this.nqlQueryParser    = nqlQueryParser;
         this.keywordExtractor  = keywordExtractor;
         this.embeddingClient   = embeddingClient;
@@ -42,6 +56,10 @@ public class QueryController {
         this.newsSearchService = newsSearchService;
         this.queryMetrics      = queryMetrics;
         this.aggregationBuilder = aggregationBuilder;
+        this.queryCacheService = queryCacheService;
+        this.queryProfiler     = queryProfiler;
+        this.savedQueryService = savedQueryService;
+        this.eventPublisher    = eventPublisher;
     }
 
     @PostMapping("/query")
@@ -55,13 +73,18 @@ public class QueryController {
 
         queryMetrics.recordQuery();
         long startTime = System.currentTimeMillis();
+        queryProfiler.clear();
 
         try {
+            // Phase 4: 프로파일링 시작
+            queryProfiler.start("nql_parsing");
 
             // 1. NQL → IR
             long parseStart = System.currentTimeMillis();
             NQLExpression expr = nqlQueryParser.parseToExpression(request.nql());
-            queryMetrics.recordParseTime(System.currentTimeMillis() - parseStart);
+            long parseTime = System.currentTimeMillis() - parseStart;
+            queryMetrics.recordParseTime(parseTime);
+            queryProfiler.end("nql_parsing");
 
             // Aggregation 여부 확인
             boolean hasAggregation = expr instanceof NQLExpression.AggregationExpr;
@@ -77,11 +100,15 @@ public class QueryController {
             }
 
             // 2. IR → ES bool query
+            queryProfiler.start("query_build");
             long buildStart = System.currentTimeMillis();
             var boolQuery = nqlQueryParser.buildQuery(baseExpr);
-            queryMetrics.recordBuildQueryTime(System.currentTimeMillis() - buildStart);
+            long buildTime = System.currentTimeMillis() - buildStart;
+            queryMetrics.recordBuildQueryTime(buildTime);
+            queryProfiler.end("query_build");
 
             // 3. keyword() 표현식 추출 → 임베딩 (실패 시 null → BM25 폴백)
+            queryProfiler.start("embedding");
             long embeddingStart = System.currentTimeMillis();
             List<NQLExpression.KeywordExpr> keywords = keywordExtractor.extract(baseExpr);
             float[] vector = null;
@@ -94,7 +121,9 @@ public class QueryController {
                     // 임베딩 실패 - BM25 단독 검색으로 진행
                 }
             }
-            queryMetrics.recordEmbeddingTime(System.currentTimeMillis() - embeddingStart);
+            long embeddingTime = System.currentTimeMillis() - embeddingStart;
+            queryMetrics.recordEmbeddingTime(embeddingTime);
+            queryProfiler.end("embedding");
 
             // 4. RRF retriever 구성 (vector == null 이면 BM25 단독)
             JsonNode retriever = rrfScorer.buildRetriever(boolQuery, keywords, vector);
@@ -105,27 +134,53 @@ public class QueryController {
             }
 
             // 6. ES 검색
+            queryProfiler.start("es_search");
             long searchStart = System.currentTimeMillis();
             NewsSearchResponse result = newsSearchService.searchWithRrf(retriever, request.page() * 20);
-            queryMetrics.recordSearchTime(System.currentTimeMillis() - searchStart);
+            long searchTime = System.currentTimeMillis() - searchStart;
+            queryMetrics.recordSearchTime(searchTime);
+            queryProfiler.end("es_search");
             queryMetrics.recordQueryTime(startTime);
+
+            // Phase 4: 프로파일링 로깅
+            queryProfiler.logTimings(request.nql());
+
+            // Phase 5: 검색 히스토리 기록
+            long totalDuration = System.currentTimeMillis() - startTime;
+            savedQueryService.recordHistory(DEFAULT_USER_ID, request.nql(), (double) totalDuration, (int) result.total());
+
+            // Phase 5: 알림 이벤트 발행
+            eventPublisher.publish(QueryExecutionEvent.success(DEFAULT_USER_ID, request.nql(), totalDuration, (int) result.total()));
+
             return ResponseEntity.ok(result);
 
         } catch (IllegalArgumentException e) {
             queryMetrics.recordError();
             queryMetrics.recordQueryTime(startTime);
+            // Phase 5: 오류 히스토리 기록
+            savedQueryService.recordHistoryError(DEFAULT_USER_ID, request.nql(), e.getMessage());
+            // Phase 5: 오류 이벤트 발행
+            eventPublisher.publish(QueryExecutionEvent.error(DEFAULT_USER_ID, request.nql(), "NQL 문법 오류: " + e.getMessage()));
             return ResponseEntity.badRequest().body(
                 new ErrorResponse("NQL 문법 오류: " + e.getMessage(), "NQL_PARSE_ERROR", "/api/query")
             );
         } catch (IOException e) {
             queryMetrics.recordError();
             queryMetrics.recordQueryTime(startTime);
+            // Phase 5: 오류 히스토리 기록
+            savedQueryService.recordHistoryError(DEFAULT_USER_ID, request.nql(), e.getMessage());
+            // Phase 5: 오류 이벤트 발행
+            eventPublisher.publish(QueryExecutionEvent.error(DEFAULT_USER_ID, request.nql(), "Elasticsearch 연결 오류: " + e.getMessage()));
             return ResponseEntity.internalServerError().body(
                 new ErrorResponse("Elasticsearch 연결 오류. 잠시 후 다시 시도해주세요.", "ES_CONNECTION_ERROR", "/api/query")
             );
         } catch (Exception e) {
             queryMetrics.recordError();
             queryMetrics.recordQueryTime(startTime);
+            // Phase 5: 오류 히스토리 기록
+            savedQueryService.recordHistoryError(DEFAULT_USER_ID, request.nql(), e.getMessage());
+            // Phase 5: 오류 이벤트 발행
+            eventPublisher.publish(QueryExecutionEvent.error(DEFAULT_USER_ID, request.nql(), "예상치 못한 오류: " + e.getMessage()));
             return ResponseEntity.internalServerError().body(
                 new ErrorResponse("예상치 못한 오류가 발생했습니다: " + e.getMessage(), "INTERNAL_SERVER_ERROR", "/api/query")
             );

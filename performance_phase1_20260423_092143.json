@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-04-23T09:21:44.623025",
+  "results": {
+    "Simple keyword": {
+      "query": "keyword(\"AI\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 55.17228444417318,
+      "min_ms": 51.695823669433594,
+      "max_ms": 58.44259262084961,
+      "stddev_ms": 3.37810553287104,
+      "p95_ms": 58.44259262084961
+    },
+    "Keyword + sentiment": {
+      "query": "keyword(\"technology\") AND sentiment == \"positive\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 45.246283213297524,
+      "min_ms": 36.60941123962402,
+      "max_ms": 55.82571029663086,
+      "stddev_ms": 9.754315846210313,
+      "p95_ms": 55.82571029663086
+    },
+    "OR query": {
+      "query": "keyword(\"AI\") OR keyword(\"machine learning\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 57.37900733947754,
+      "min_ms": 55.07922172546387,
+      "max_ms": 60.73427200317383,
+      "stddev_ms": 2.971603174903417,
+      "p95_ms": 60.73427200317383
+    },
+    "Keyword + source": {
+      "query": "keyword(\"blockchain\") AND source IN [\"Reuters\", \"Bloomberg\"]",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 52.385568618774414,
+      "min_ms": 44.651031494140625,
+      "max_ms": 59.03959274291992,
+      "stddev_ms": 7.25488145738002,
+      "p95_ms": 59.03959274291992
+    },
+    "Complex query": {
+      "query": "(keyword(\"AI\") * 2.0 OR keyword(\"tech\")) AND sentiment != \"negative\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 58.93564224243164,
+      "min_ms": 51.09858512878418,
+      "max_ms": 69.27895545959473,
+      "stddev_ms": 9.34571859643019,
+      "p95_ms": 69.27895545959473
+    },
+    "Match all": {
+      "query": "*",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 44.36373710632324,
+      "min_ms": 40.17782211303711,
+      "max_ms": 48.88176918029785,
+      "stddev_ms": 4.3614676376058314,
+      "p95_ms": 48.88176918029785
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-04-23T09:35:48.952068",
+  "results": {
+    "Simple keyword": {
+      "query": "keyword(\"AI\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 31.90779685974121,
+      "min_ms": 23.932933807373047,
+      "max_ms": 45.79281806945801,
+      "stddev_ms": 12.069014544344263,
+      "p95_ms": 45.79281806945801
+    },
+    "Keyword + sentiment": {
+      "query": "keyword(\"technology\") AND sentiment == \"positive\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 53.6650021870931,
+      "min_ms": 37.42694854736328,
+      "max_ms": 70.53184509277344,
+      "stddev_ms": 16.561403194666454,
+      "p95_ms": 70.53184509277344
+    },
+    "OR query": {
+      "query": "keyword(\"AI\") OR keyword(\"machine learning\")",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 29.950857162475586,
+      "min_ms": 23.34284782409668,
+      "max_ms": 38.20538520812988,
+      "stddev_ms": 7.5668370051826805,
+      "p95_ms": 38.20538520812988
+    },
+    "Keyword + source": {
+      "query": "keyword(\"blockchain\") AND source IN [\"Reuters\", \"Bloomberg\"]",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 28.32786242167155,
+      "min_ms": 22.528648376464844,
+      "max_ms": 37.88471221923828,
+      "stddev_ms": 8.339187251848596,
+      "p95_ms": 37.88471221923828
+    },
+    "Complex query": {
+      "query": "(keyword(\"AI\") * 2.0 OR keyword(\"tech\")) AND sentiment != \"negative\"",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 54.13683255513509,
+      "min_ms": 45.966386795043945,
+      "max_ms": 70.18637657165527,
+      "stddev_ms": 13.900076193878817,
+      "p95_ms": 70.18637657165527
+    },
+    "Match all": {
+      "query": "*",
+      "success_count": 3,
+      "error_count": 0,
+      "avg_ms": 23.897965749104817,
+      "min_ms": 18.640756607055664,
+      "max_ms": 30.43985366821289,
+      "stddev_ms": 6.003538334584154,
+      "p95_ms": 30.43985366821289
+    }
+  }
+}

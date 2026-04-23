@@ -97,27 +97,27 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "nql_query_duration",
+          "expr": "rate(nql_query_duration_seconds_sum[1m]) / rate(nql_query_duration_seconds_count[1m]) * 1000",
           "legendFormat": "전체 응답시간",
           "refId": "A"
         },
         {
-          "expr": "nql_parse_duration",
+          "expr": "rate(nql_parse_duration_seconds_sum[1m]) / rate(nql_parse_duration_seconds_count[1m]) * 1000",
           "legendFormat": "파싱",
           "refId": "B"
         },
         {
-          "expr": "nql_build_query_duration",
+          "expr": "rate(nql_build_query_duration_seconds_sum[1m]) / rate(nql_build_query_duration_seconds_count[1m]) * 1000",
           "legendFormat": "쿼리빌드",
           "refId": "C"
         },
         {
-          "expr": "nql_embedding_duration",
+          "expr": "rate(nql_embedding_duration_seconds_sum[1m]) / rate(nql_embedding_duration_seconds_count[1m]) * 1000",
           "legendFormat": "임베딩",
           "refId": "D"
         },
         {
-          "expr": "nql_search_duration",
+          "expr": "rate(nql_search_duration_seconds_sum[1m]) / rate(nql_search_duration_seconds_count[1m]) * 1000",
           "legendFormat": "ES검색",
           "refId": "E"
         }
@@ -174,7 +174,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "rate(nql_query_total[5m])",
+          "expr": "rate(nql_query_total_total[1m])",
           "legendFormat": "쿼리/초",
           "refId": "A"
         }
@@ -225,12 +225,12 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "increase(nql_query_total[1h])",
+          "expr": "increase(nql_query_total_total[1h])",
           "legendFormat": "성공",
           "refId": "A"
         },
         {
-          "expr": "increase(nql_query_errors[1h])",
+          "expr": "increase(nql_query_errors_total[1h])",
           "legendFormat": "에러",
           "refId": "B"
         }
@@ -313,7 +313,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "increase(nql_query_total[5m])",
+          "expr": "increase(nql_query_total_total[5m])",
           "legendFormat": "총 쿼리",
           "refId": "A"
         }

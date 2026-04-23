@@ -81,6 +81,21 @@ test {
     useJUnitPlatform()
 }
 
+task jmhBenchmark(type: JavaExec, dependsOn: testClasses) {
+    group = 'Benchmark'
+    description = 'Run JMH benchmarks'
+    mainClass = 'org.openjdk.jmh.Main'
+    classpath = sourceSets.test.runtimeClasspath
+    args = [
+        'com.newsquery.benchmark.*',
+        '-rf', 'json',
+        '-rff', 'measurements/jmh-results.json',
+        '-wi', '3', '-i', '5', '-f', '1',
+        '-prof', 'gc'
+    ]
+    jvmArgs = ['-Xms512m', '-Xmx512m', '-XX:+UseG1GC']
+}
+
 jacoco {
     toolVersion = "0.8.10"
 }

@@ -41,3 +41,7 @@ hadoop-winutils/
 
 # Claude Code 설정
 .claude/
+
+# Node.js
+node_modules/
+package-lock.json
